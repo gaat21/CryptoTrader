@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TradingTester": {
+      "commandName": "Project",
+      "commandLineArgs": "-e Poloniex -t \"USDT_ETH\" -b"
+    }
+  }
+}
