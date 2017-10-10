@@ -2,7 +2,7 @@
   "profiles": {
     "TradingTester": {
       "commandName": "Project",
-      "commandLineArgs": "-e Poloniex -t \"USDT_ETH\" -b"
+      "commandLineArgs": "-e Poloniex -t \"USDT_ETH\" -p OneMinute -i -h 48"
     }
   }
 }

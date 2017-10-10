@@ -5,6 +5,7 @@ namespace TradingTester.Logic.Services.Interfaces
 {
     public interface ITraderService
     {
+        int TradingCount { get; }
         Task CheckStrategyAsync(CandleModel candle);
     }
 }

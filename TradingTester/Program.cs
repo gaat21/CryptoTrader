@@ -61,7 +61,8 @@ namespace TradingTester
             serviceCollection.AddTransient<ICandleService, CandleDbService>();
             serviceCollection.AddTransient<IIndicatorFactory, EmaIndicatorFactory>();
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
-            serviceCollection.AddTransient<IStrategy, EmaStrategy>();
+            //serviceCollection.AddTransient<IStrategy, EmaStrategy>();
+            serviceCollection.AddTransient<IStrategy, CustomStrategy>();
 
             return serviceCollection.BuildServiceProvider();
         }
@@ -124,12 +125,16 @@ namespace TradingTester
                 {
                     backtesTraderService.CheckStrategyAsync(candle);
                 }
+                Console.WriteLine("############ SUMMARY ############");
+                Console.WriteLine($"Trading count: {backtesTraderService.TradingCount}");
+                var userBalanceService = serviceProvider.GetService<IUserBalanceService>();
+                Console.WriteLine($"Total profit: ${userBalanceService.TotalProfit}");
             }
 
             if (options.EnableImport)
             {
                 var importProvider = serviceProvider.GetService<IImportRepository>();
-                var candles = importProvider.ImportCandlesAsync(options.TradingPair, 1, 5).Result;
+                var candles = importProvider.ImportCandlesAsync(options.TradingPair, options.ImportIntervalInHour, options.CandlePeriod).Result;
                 Console.WriteLine($"Imported candle count: {candles.Count()}");
             }
         }

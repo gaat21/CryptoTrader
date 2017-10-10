@@ -10,12 +10,15 @@ namespace TradingTester.Logic.Services
     {
         private readonly IStrategy _strategy;
         private readonly IUserBalanceService _userBalanceService;
-
+        private int _tradingCount;
+        
         public BacktestTraderService(IStrategy strategy, IUserBalanceService userBalanceService)
         {
             _strategy = strategy;
             _userBalanceService = userBalanceService;
         }
+
+        public int TradingCount => _tradingCount;
 
         public async Task CheckStrategyAsync(CandleModel candle)
         {
@@ -37,10 +40,13 @@ namespace TradingTester.Logic.Services
         private void SellCryptoCurrency(CandleModel candle)
         {
             Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}");
+            _tradingCount++;
+            Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
         }
 
         private void BuyCryptoCurrency(CandleModel candle)
         {
+            _userBalanceService.SetBuyPrice(candle.ClosePrice);
             Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}");
         }
     }

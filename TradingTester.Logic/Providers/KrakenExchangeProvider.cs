@@ -19,11 +19,11 @@ namespace TradingTester.Logic.Providers
         {
         }
 
-        public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, long since, int intervalInMin)
+        public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, long start, CandlePeriod candlePeriod)
         {
             using (var client = GetClient())
             {
-                var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={intervalInMin}&since={since}";
+                var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={candlePeriod}&since={start}";
 
                 using (var response = await client.GetAsync(endPointUrl))
                 {

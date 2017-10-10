@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using TradingTester.Logic.Providers.Models;
 
 namespace TradingTester
 {
@@ -15,5 +16,11 @@ namespace TradingTester
 
         [Option('i', "import", HelpText = "Imported data")]
         public bool EnableImport { get; set; }
+
+        [Option('h', "import-interval", HelpText = "Import interval in hour")]
+        public int ImportIntervalInHour { get; set; }
+
+        [Option('p', "candle-period", HelpText = "Candle period")]
+        public CandlePeriod CandlePeriod { get; set; }
     }
 }

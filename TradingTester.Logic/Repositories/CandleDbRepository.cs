@@ -34,7 +34,7 @@ namespace TradingTester.Logic.Repositories
 
         public async Task<Dictionary<long, List<CandleDto>>> GetCandlesAsync(string tradingPair)
         {
-           return await _tradonDbContext.Candles.Where(w => w.TradingPair == tradingPair).GroupBy(g => g.ScanId).ToDictionaryAsync(d => d.Key, d => d.ToList());
+           return await _tradonDbContext.Candles.Where(w => w.TradingPair == tradingPair).GroupBy(g => g.ScanId).ToDictionaryAsync(d => d.Key, d => d.ToList().OrderBy(o => o.StartDateTime).ToList());
         }
 
         private long GetLatestScanId()

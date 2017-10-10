@@ -5,6 +5,7 @@ using AutoMapper;
 using TradingTester.DAL.Models;
 using TradingTester.Logic.Models;
 using TradingTester.Logic.Providers.Interfaces;
+using TradingTester.Logic.Providers.Models;
 using TradingTester.Logic.Repositories.Interfaces;
 
 namespace TradingTester.Logic.Repositories
@@ -20,7 +21,7 @@ namespace TradingTester.Logic.Repositories
             _candleDbRepository = candleDbRepository;
         }
 
-        public async Task<IEnumerable<CandleModel>> ImportCandlesAsync(string tradingPair, int intervalInHour, int candlePeriod)
+        public async Task<IEnumerable<CandleModel>> ImportCandlesAsync(string tradingPair, int intervalInHour, CandlePeriod candlePeriod)
         {
             var candles = await _exchangeProvider.GetCandlesAsync(tradingPair, DateTimeOffset.UtcNow.AddHours(-1 * intervalInHour).ToUnixTimeSeconds(), candlePeriod);
 
