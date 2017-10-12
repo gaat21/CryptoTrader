@@ -25,7 +25,7 @@ namespace TradingTester.Logic.Services
             var trendDirection = await _strategy.CheckTrendAsync(candle.ClosePrice);
             if (trendDirection == TrendDirection.None)
             {
-                Console.WriteLine($"Nothing. Price: ${candle.ClosePrice}");
+                //Console.WriteLine($"Nothing. Price: ${candle.ClosePrice}");
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace TradingTester.Logic.Services
 
         private void SellCryptoCurrency(CandleModel candle)
         {
-            Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}");
+            Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
             _tradingCount++;
             Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
         }
@@ -47,7 +47,7 @@ namespace TradingTester.Logic.Services
         private void BuyCryptoCurrency(CandleModel candle)
         {
             _userBalanceService.SetBuyPrice(candle.ClosePrice);
-            Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}");
+            Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
         }
     }
 }

@@ -129,6 +129,7 @@ namespace TradingTester
                 Console.WriteLine($"Trading count: {backtesTraderService.TradingCount}");
                 var userBalanceService = serviceProvider.GetService<IUserBalanceService>();
                 Console.WriteLine($"Total profit: ${userBalanceService.TotalProfit}");
+                Console.WriteLine($"Total profit %: {decimal.Round(userBalanceService.TotalPercentage, 2)}%");
             }
 
             if (options.EnableImport)

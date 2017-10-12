@@ -13,6 +13,7 @@ namespace TradingTester.Logic.Strategies
         private decimal _lastBuyPrice;
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
+        private int _persistenceBuyCount;
 
         public CustomStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
         {
@@ -24,31 +25,41 @@ namespace TradingTester.Logic.Strategies
 
         public async Task<TrendDirection> CheckTrendAsync(decimal price)
         {
-            var trendDirection = TrendDirection.Short;
-            if (_lastBuyPrice == 0)
+            if (_lastTrend == TrendDirection.Short)
             {
-                _lastBuyPrice = price;
-            }
-
-            var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(price);
-            var longEmaValue = _longEmaIndicator.GetIndicatorValue(price);
-            if (shortEmaValue > longEmaValue)
-            {
-                trendDirection = TrendDirection.Long;
-                if (price >= _lastBuyPrice * (decimal)1.01)
+                var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(price);
+                var longEmaValue = _longEmaIndicator.GetIndicatorValue(price);
+                if (shortEmaValue > longEmaValue)
                 {
-                    trendDirection = TrendDirection.Short;
+                    if (_persistenceBuyCount > 2)
+                    {
+                        _lastTrend = TrendDirection.Long;
+                        _lastBuyPrice = price;
+                    }
+                    else
+                    {
+                        _persistenceBuyCount++;
+                        return await Task.FromResult(TrendDirection.None);
+                    }
+                }
+                else
+                {
+                    return await Task.FromResult(TrendDirection.None);
+                }
+            }
+            else if(_lastTrend == TrendDirection.Long)
+            {
+                if (price >= _lastBuyPrice * (decimal) 1.03 || price < _lastBuyPrice * (decimal) 0.9)
+                {
+                    _lastTrend = TrendDirection.Short;
+                }
+                else
+                {
+                    return await Task.FromResult(TrendDirection.None);
                 }
             }
 
-            if (trendDirection != _lastTrend)
-            {
-                _lastTrend = trendDirection;
-                _lastBuyPrice = trendDirection == TrendDirection.Long ? price : _lastBuyPrice;
-                return await Task.FromResult(trendDirection);
-            }
-
-            return await Task.FromResult(TrendDirection.None);
+            return await Task.FromResult(_lastTrend);
         }
     }
 }
