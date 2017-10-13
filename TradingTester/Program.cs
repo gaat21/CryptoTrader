@@ -13,6 +13,7 @@ using TradingTester.Logic.Indicators.Interfaces;
 using TradingTester.Logic.Options;
 using TradingTester.Logic.Providers;
 using TradingTester.Logic.Providers.Interfaces;
+using TradingTester.Logic.Providers.Models;
 using TradingTester.Logic.Repositories;
 using TradingTester.Logic.Repositories.Interfaces;
 using TradingTester.Logic.Services;
@@ -61,8 +62,16 @@ namespace TradingTester
             serviceCollection.AddTransient<ICandleService, CandleDbService>();
             serviceCollection.AddTransient<IIndicatorFactory, EmaIndicatorFactory>();
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
-            //serviceCollection.AddTransient<IStrategy, EmaStrategy>();
-            serviceCollection.AddTransient<IStrategy, CustomStrategy>();
+
+            switch (options.Strategy)
+            {
+                case Strategy.Ema:
+                    serviceCollection.AddTransient<IStrategy, EmaStrategy>();
+                    break;
+                case Strategy.Custom:
+                    serviceCollection.AddTransient<IStrategy, CustomStrategy>();
+                    break;
+            }
 
             return serviceCollection.BuildServiceProvider();
         }

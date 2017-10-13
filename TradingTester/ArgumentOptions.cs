@@ -22,5 +22,8 @@ namespace TradingTester
 
         [Option('p', "candle-period", HelpText = "Candle period")]
         public CandlePeriod CandlePeriod { get; set; }
+
+        [Option('s', "strategy", HelpText = "Trading strategy")]
+        public Strategy Strategy { get; set; } = Strategy.Ema;
     }
 }

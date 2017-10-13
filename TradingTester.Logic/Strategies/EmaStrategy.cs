@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using TradingTester.Logic.Indicators.Interfaces;
@@ -13,6 +13,8 @@ namespace TradingTester.Logic.Strategies
         private TrendDirection _lastTrend = TrendDirection.Short;
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
+        private int _persistenceBuyCount;
+        private int _persistenceSellCount;
 
         public EmaStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
         {
@@ -24,21 +26,41 @@ namespace TradingTester.Logic.Strategies
 
         public async Task<TrendDirection> CheckTrendAsync(decimal price)
         {
-            var trendDirection = TrendDirection.Short;
-
-            var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(price);
-            var longEmaValue = _longEmaIndicator.GetIndicatorValue(price);
-            if (shortEmaValue > longEmaValue)
+            if (_lastTrend == TrendDirection.Short)
             {
-                trendDirection = TrendDirection.Long;
+                var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(price);
+                var longEmaValue = _longEmaIndicator.GetIndicatorValue(price);
+                if (shortEmaValue > longEmaValue)
+                {
+                    if (_persistenceBuyCount > 2)
+                    {
+                        _lastTrend = TrendDirection.Long;
+                    }
+                    else
+                    {
+                        _persistenceBuyCount++;
+                        return await Task.FromResult(TrendDirection.None);
+                    }
+                }
+                else
+                {
+                    return await Task.FromResult(TrendDirection.None);
+                }
             }
-            if (trendDirection != _lastTrend)
+            else if (_lastTrend == TrendDirection.Long)
             {
-                _lastTrend = trendDirection;
-                return await Task.FromResult(trendDirection);
+                if (_persistenceSellCount > 5)
+                {
+                    _lastTrend = TrendDirection.Short;
+                }
+                else
+                {
+                    _persistenceSellCount++;
+                    return await Task.FromResult(TrendDirection.None);
+                }
             }
 
-            return await Task.FromResult(TrendDirection.None);
+            return await Task.FromResult(_lastTrend);
         }
     }
 }
