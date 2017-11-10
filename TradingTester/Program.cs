@@ -3,23 +3,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AutoMapper;
+using CryptoTrading.DAL;
+using CryptoTrading.Logic.Indicators;
+using CryptoTrading.Logic.Indicators.Interfaces;
+using CryptoTrading.Logic.Options;
+using CryptoTrading.Logic.Providers;
+using CryptoTrading.Logic.Providers.Interfaces;
+using CryptoTrading.Logic.Providers.Models;
+using CryptoTrading.Logic.Repositories;
+using CryptoTrading.Logic.Repositories.Interfaces;
+using CryptoTrading.Logic.Services;
+using CryptoTrading.Logic.Services.Interfaces;
+using CryptoTrading.Logic.Strategies;
+using CryptoTrading.Logic.Strategies.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TradingTester.AutoMapper;
-using TradingTester.DAL;
-using TradingTester.Logic.Indicators;
-using TradingTester.Logic.Indicators.Interfaces;
-using TradingTester.Logic.Options;
-using TradingTester.Logic.Providers;
-using TradingTester.Logic.Providers.Interfaces;
-using TradingTester.Logic.Providers.Models;
-using TradingTester.Logic.Repositories;
-using TradingTester.Logic.Repositories.Interfaces;
-using TradingTester.Logic.Services;
-using TradingTester.Logic.Services.Interfaces;
-using TradingTester.Logic.Strategies;
-using TradingTester.Logic.Strategies.Interfaces;
 using TradingTester.Options;
 
 namespace TradingTester
@@ -81,7 +81,7 @@ namespace TradingTester
             Mapper.Initialize(cfg =>
             {
                 cfg.AddProfile<AutoMapperProfile>();
-                cfg.AddProfile<Logic.AutoMapper.AutoMapperProfile>();
+                cfg.AddProfile<CryptoTrading.Logic.AutoMapper.AutoMapperProfile>();
             });
         }
 
@@ -130,10 +130,8 @@ namespace TradingTester
                 Console.WriteLine($"Selected option: {selectedOption}; Candle count: {candles.Count}");
 
                 var backtesTraderService = serviceProvider.GetService<ITraderService>();
-                foreach (var candle in candles)
-                {
-                    backtesTraderService.CheckStrategyAsync(candle);
-                }
+                backtesTraderService.CheckStrategyAsync(candles);
+                
                 Console.WriteLine("############ SUMMARY ############");
                 Console.WriteLine($"Trading count: {backtesTraderService.TradingCount}");
                 var userBalanceService = serviceProvider.GetService<IUserBalanceService>();

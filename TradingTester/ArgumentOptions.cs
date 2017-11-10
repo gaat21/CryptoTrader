@@ -1,5 +1,5 @@
 ﻿using CommandLine;
-using TradingTester.Logic.Providers.Models;
+using CryptoTrading.Logic.Providers.Models;
 
 namespace TradingTester
 {

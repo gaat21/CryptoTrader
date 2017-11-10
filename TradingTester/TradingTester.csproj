@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TradingTester.DAL\TradingTester.DAL.csproj" />
-    <ProjectReference Include="..\TradingTester.Logic\TradingTester.Logic.csproj" />
+    <ProjectReference Include="..\CryptoTrading.DAL\CryptoTrading.DAL.csproj" />
+    <ProjectReference Include="..\CryptoTrading.Logic\CryptoTrading.Logic.csproj" />
   </ItemGroup>
 
   <ItemGroup>
