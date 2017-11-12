@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Repositories.Interfaces;
 using CryptoTrading.Logic.Services.Interfaces;
+using CryptoTrading.Logic.Services.Models;
 
 namespace CryptoTrading.Logic.Services
 {
@@ -37,16 +37,5 @@ namespace CryptoTrading.Logic.Services
 
             return candlePeriods;
         }
-    }
-
-    public class CandlePeriodModel
-    {
-        public DateTime PeriodStart { get; set; }
-
-        public DateTime PeriodEnd { get; set; }
-
-        public long ScanId { get; set; }
-
-        public IEnumerable<CandleModel> Candles { get; set; }
     }
 }

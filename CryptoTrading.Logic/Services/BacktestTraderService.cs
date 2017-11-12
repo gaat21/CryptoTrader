@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Models;
+using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Services.Interfaces;
 using CryptoTrading.Logic.Strategies.Interfaces;
 
@@ -38,24 +40,33 @@ namespace CryptoTrading.Logic.Services
 
                 if (trendDirection == TrendDirection.Long)
                 {
-                    BuyCryptoCurrency(currentCandle);
+                    await BuyAsync(currentCandle);
                     continue;
                 }
-                SellCryptoCurrency(currentCandle);
+                await SellAsync(currentCandle);
             }
         }
 
-        private void SellCryptoCurrency(CandleModel candle)
+        public Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SellAsync(CandleModel candle)
         {
             Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
             _tradingCount++;
             Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
+
+            return Task.FromResult(0);
         }
 
-        private void BuyCryptoCurrency(CandleModel candle)
+        public Task BuyAsync(CandleModel candle)
         {
             _userBalanceService.SetBuyPrice(candle.ClosePrice);
             Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
+
+            return Task.FromResult(0);
         }
     }
 }

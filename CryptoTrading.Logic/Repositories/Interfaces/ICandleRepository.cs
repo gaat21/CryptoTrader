@@ -6,7 +6,7 @@ namespace CryptoTrading.Logic.Repositories.Interfaces
 {
     public interface ICandleRepository
     {
-        Task SaveCandleAsync(string tradingPair, List<CandleDto> candlesDto);
+        Task SaveCandleAsync(string tradingPair, List<CandleDto> candlesDto, long? lastScanId = null);
 
         Task<Dictionary<long, List<CandleDto>>> GetCandlesAsync(string tradingPair);
     }

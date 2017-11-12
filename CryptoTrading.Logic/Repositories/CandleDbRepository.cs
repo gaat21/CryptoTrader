@@ -17,13 +17,13 @@ namespace CryptoTrading.Logic.Repositories
             _tradonDbContext = tradonDbContext;
         }
 
-        public async Task SaveCandleAsync(string tradingPair, List<CandleDto> candlesDto)
+        public async Task SaveCandleAsync(string tradingPair, List<CandleDto> candlesDto, long? lastScanId = null)
         {
-            var lastScanId = GetLatestScanId();
+            lastScanId = lastScanId ?? GetLatestScanId();
             
             foreach (var candleDto in candlesDto)
             {
-                candleDto.ScanId = lastScanId + 1;
+                candleDto.ScanId = lastScanId.Value + 1;
                 candleDto.TradingPair = tradingPair;
             }
 
