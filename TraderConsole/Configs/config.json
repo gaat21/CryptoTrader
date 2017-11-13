@@ -1,0 +1,15 @@
+﻿{
+  "Database": {
+    "ConnectionString": "server=localhost;database=trading;user id=root;password=123456;SslMode=none"
+  },
+  "Kraken": {
+    "ApiUrl": "https://api.kraken.com"
+  },
+  "Poloniex": {
+    "Apiurl": "https://poloniex.com"
+  },
+  "EmaStrategy": {
+    "ShortWeight": 1,
+    "LongWeight": 5
+  } 
+}

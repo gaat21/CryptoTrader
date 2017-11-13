@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TraderConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "-e Kraken -t \"XETHZUSD\""
+    }
+  }
+}

@@ -2,7 +2,7 @@
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Providers.Models;
 
-namespace TradingTester
+namespace TraderConsole
 {
     public class ArgumentOptions
     {
@@ -12,19 +12,10 @@ namespace TradingTester
         [Option('t', "tradingpair", Required = true, HelpText = "Trading pair")]
         public string TradingPair { get; set; }
 
-        [Option('b', "backtest", HelpText = "Backtesting imported data")]
-        public bool EnableBacktest { get; set; }
-
-        [Option('i', "import", HelpText = "Imported data")]
-        public bool EnableImport { get; set; }
-
-        [Option('h', "import-interval", HelpText = "Import interval in hour")]
-        public int ImportIntervalInHour { get; set; }
-
         [Option('p', "candle-period", HelpText = "Candle period")]
-        public CandlePeriod CandlePeriod { get; set; }
+        public CandlePeriod CandlePeriod { get; set; } = CandlePeriod.OneMinute;
 
         [Option('s', "strategy", HelpText = "Trading strategy")]
-        public Strategy Strategy { get; set; } = Strategy.Ema;
+        public Strategy Strategy { get; set; } = Strategy.Custom;
     }
 }

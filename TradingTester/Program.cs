@@ -6,6 +6,7 @@ using AutoMapper;
 using CryptoTrading.DAL;
 using CryptoTrading.Logic.Indicators;
 using CryptoTrading.Logic.Indicators.Interfaces;
+using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers;
 using CryptoTrading.Logic.Providers.Interfaces;

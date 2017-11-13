@@ -23,7 +23,7 @@ namespace CryptoTrading.Logic.Providers
         {
             using (var client = GetClient())
             {
-                var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={candlePeriod}&since={start}";
+                var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={(int)candlePeriod}&since={start}";
 
                 using (var response = await client.GetAsync(endPointUrl))
                 {

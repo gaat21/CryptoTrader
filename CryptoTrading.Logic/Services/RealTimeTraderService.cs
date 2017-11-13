@@ -60,7 +60,7 @@ namespace CryptoTrading.Logic.Services
 
         public async Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
         {
-            var lastSince = DateTimeOffset.UtcNow.AddMinutes(-1 * _strategy.CandleSize).ToUnixTimeSeconds();
+            var lastSince = GetSinceUnixTime(candlePeriod);
             while (!cancellationToken.IsCancellationRequested)
             {
                 var candles = await _exchangeProvider.GetCandlesAsync(tradingPair, lastSince, candlePeriod);
@@ -72,7 +72,8 @@ namespace CryptoTrading.Logic.Services
                 var prevCandles = candlesList.GetRange(0, candlesList.Count - 1);
                 var currentCandle = candlesList.Last();
                 var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
-                
+
+                Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince)}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}");
                 if (trendDirection == TrendDirection.Long)
                 {
                     await BuyAsync(currentCandle);
@@ -83,6 +84,7 @@ namespace CryptoTrading.Logic.Services
                 }
 
                 await Task.Delay(DelayInMilliseconds, cancellationToken);
+                lastSince = GetSinceUnixTime(candlePeriod);
             }
         }
 
@@ -101,6 +103,15 @@ namespace CryptoTrading.Logic.Services
             Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
 
             return Task.FromResult(0);
+        }
+
+        private long GetSinceUnixTime(CandlePeriod candlePeriod)
+        {
+            var utcNow = DateTimeOffset.UtcNow;
+
+            return candlePeriod == CandlePeriod.FiveMinutes 
+                ? utcNow.AddMinutes(-5 * _strategy.CandleSize).AddSeconds(-1 * utcNow.Second).ToUnixTimeSeconds() 
+                : utcNow.AddMinutes(-1 * _strategy.CandleSize).AddSeconds(-1 * utcNow.Second).ToUnixTimeSeconds();
         }
     }
 }
