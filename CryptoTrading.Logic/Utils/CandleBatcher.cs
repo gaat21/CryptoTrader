@@ -17,6 +17,9 @@ namespace CryptoTrading.Logic.Utils
             while (startPeriod < end)
             {
                 var tradeList = orderedTrades.Where(w => w.DateTs >= startPeriod && w.DateTs < startPeriod + 60).ToList();
+
+                //Console.WriteLine($"Start: {startPeriod}; End: {end}; Trades count: {trades.Count}; Filterd trades count: {tradeList.Count}");
+
                 if (tradeList.Count != 0)
                 {
                     candles.Add(new CandleModel

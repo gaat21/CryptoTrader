@@ -1,0 +1,17 @@
+﻿using CryptoTrading.Logic.Indicators.Interfaces;
+
+namespace CryptoTrading.Logic.Indicators
+{
+    public class IndicatorFactory : IIndicatorFactory
+    {
+        public IIndicator GetEmaIndicator(int weight)
+        {
+            return new EmaIndicator(weight);
+        }
+
+        public IIndicator GetRsiIndicator(int weight)
+        {
+            return new RsiIndicator(weight);
+        }
+    }
+}

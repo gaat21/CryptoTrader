@@ -36,7 +36,7 @@ namespace CryptoTrading.Logic.Repositories
            return await _tradonDbContext.Candles.Where(w => w.TradingPair == tradingPair).GroupBy(g => g.ScanId).ToDictionaryAsync(d => d.Key, d => d.ToList().OrderBy(o => o.StartDateTime).ToList());
         }
 
-        private long GetLatestScanId()
+        public long GetLatestScanId()
         {
             return _tradonDbContext.Candles.Any() ? _tradonDbContext.Candles.GroupBy(g => g.ScanId).OrderBy(o => o.Key).Last().Key : 0;
         }

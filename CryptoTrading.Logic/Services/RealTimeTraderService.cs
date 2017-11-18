@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
+using CryptoTrading.DAL.Models;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
@@ -61,30 +64,39 @@ namespace CryptoTrading.Logic.Services
         public async Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
         {
             var lastSince = GetSinceUnixTime(candlePeriod);
+            var lastScanId = _candleRepository.GetLatestScanId();
             while (!cancellationToken.IsCancellationRequested)
             {
-                var candles = await _exchangeProvider.GetCandlesAsync(tradingPair, lastSince, candlePeriod);
+                var startWatcher = new Stopwatch();
+                startWatcher.Start();
+                var candles = await _exchangeProvider.GetCandlesAsync(tradingPair, candlePeriod, lastSince, lastSince + (int)candlePeriod * 60);
                 var candlesList = candles.ToList();
-                if (candlesList.ToList().Count != _strategy.CandleSize)
+                if (candlesList.Count == _strategy.CandleSize)
                 {
-                    throw new Exception("Candle size doesn't equal with getting candles");
-                }
-                var prevCandles = candlesList.GetRange(0, candlesList.Count - 1);
-                var currentCandle = candlesList.Last();
-                var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
+                    var prevCandles = candlesList.GetRange(0, candlesList.Count - 1);
+                    var currentCandle = candlesList.Last();
+                    var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
 
-                Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince)}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}");
-                if (trendDirection == TrendDirection.Long)
-                {
-                    await BuyAsync(currentCandle);
+                    await _candleRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(new List<CandleModel> {currentCandle}), lastScanId);
+
+                    Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}; Volumen: {currentCandle.Volume}; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
+                    if (trendDirection == TrendDirection.Long)
+                    {
+                        await BuyAsync(currentCandle);
+                    }
+                    else if (trendDirection == TrendDirection.Short)
+                    {
+                        await SellAsync(currentCandle);
+                    }
                 }
-                else if (trendDirection == TrendDirection.Short)
+                else
                 {
-                    await SellAsync(currentCandle);
+                    Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: [NO TRADES]; Close price: [NO TRADES]; Volumen: [NO TRADES]; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
                 }
 
-                await Task.Delay(DelayInMilliseconds, cancellationToken);
+                await Task.Delay((int)(DelayInMilliseconds - startWatcher.ElapsedMilliseconds), cancellationToken);
                 lastSince = GetSinceUnixTime(candlePeriod);
+                startWatcher.Stop();
             }
         }
 
@@ -108,10 +120,10 @@ namespace CryptoTrading.Logic.Services
         private long GetSinceUnixTime(CandlePeriod candlePeriod)
         {
             var utcNow = DateTimeOffset.UtcNow;
+            var candlePeridInMinutes = (int) candlePeriod;
+            var candleSizeInSeconds = candlePeridInMinutes * _strategy.CandleSize * 60;
 
-            return candlePeriod == CandlePeriod.FiveMinutes 
-                ? utcNow.AddMinutes(-5 * _strategy.CandleSize).AddSeconds(-1 * utcNow.Second).ToUnixTimeSeconds() 
-                : utcNow.AddMinutes(-1 * _strategy.CandleSize).AddSeconds(-1 * utcNow.Second).ToUnixTimeSeconds();
+            return utcNow.AddSeconds(-1 * (candleSizeInSeconds + utcNow.Second)).ToUnixTimeSeconds();
         }
     }
 }

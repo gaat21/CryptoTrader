@@ -13,25 +13,23 @@ namespace CryptoTrading.Logic.Strategies
         private TrendDirection _lastTrend = TrendDirection.Short;
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
-        private int _persistenceBuyCount;
-        private int _persistenceSellCount;
+        private int _persistenceBuyCount = 1;
+        private int _persistenceSellCount = 1;
 
         public EmaStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
         {
-            var emaIndicatorFactory1 = emaIndicatorFactory;
-            var emaOptions1 = emaOptions.Value;
-            _shortEmaIndicator = emaIndicatorFactory1.GetIndicator(emaOptions1.ShortWeight);
-            _longEmaIndicator = emaIndicatorFactory1.GetIndicator(emaOptions1.LongWeight);
+            _shortEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.ShortWeight);
+            _longEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
         }
 
         public int CandleSize => 1;
 
         public async Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
+            var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
+            var longEmaValue = _longEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
             if (_lastTrend == TrendDirection.Short)
             {
-                var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
-                var longEmaValue = _longEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
                 if (shortEmaValue > longEmaValue)
                 {
                     if (_persistenceBuyCount > 2)
@@ -51,13 +49,20 @@ namespace CryptoTrading.Logic.Strategies
             }
             else if (_lastTrend == TrendDirection.Long)
             {
-                if (_persistenceSellCount > 5)
+                if (shortEmaValue < longEmaValue)
                 {
-                    _lastTrend = TrendDirection.Short;
+                    if (_persistenceSellCount > 5)
+                    {
+                        _lastTrend = TrendDirection.Short;
+                    }
+                    else
+                    {
+                        _persistenceSellCount++;
+                        return await Task.FromResult(TrendDirection.None);
+                    }
                 }
                 else
                 {
-                    _persistenceSellCount++;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }

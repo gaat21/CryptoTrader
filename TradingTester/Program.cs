@@ -61,13 +61,18 @@ namespace TradingTester
             serviceCollection.AddTransient<IImportRepository, ImportRepository>();
             serviceCollection.AddTransient<ITraderService, BacktestTraderService>();
             serviceCollection.AddTransient<ICandleService, CandleDbService>();
-            serviceCollection.AddTransient<IIndicatorFactory, EmaIndicatorFactory>();
+            serviceCollection.AddTransient<IIndicatorFactory, IndicatorFactory>();
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
+            serviceCollection.AddTransient<IIndicator, TsiIndicator>();
+            serviceCollection.AddTransient<IIndicator, RsiIndicator>();
 
             switch (options.Strategy)
             {
                 case Strategy.Ema:
                     serviceCollection.AddTransient<IStrategy, EmaStrategy>();
+                    break;
+                case Strategy.Rsi:
+                    serviceCollection.AddTransient<IStrategy, RsiStrategy>();
                     break;
                 case Strategy.Custom:
                     serviceCollection.AddTransient<IStrategy, CustomStrategy>();

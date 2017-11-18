@@ -3,6 +3,7 @@
     public enum Strategy
     {
         Ema,
+        Rsi,
         Custom
     }
 }

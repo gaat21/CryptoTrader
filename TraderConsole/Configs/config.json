@@ -3,10 +3,12 @@
     "ConnectionString": "server=localhost;database=trading;user id=root;password=123456;SslMode=none"
   },
   "Kraken": {
-    "ApiUrl": "https://api.kraken.com"
+    "ApiUrl": "https://api.kraken.com",
+    "ApiKey": "830gvEValNSb6Cl5tO9kyXE5g4jw+btL6lCAAjgAkYbYUzCr41le0pFe"
   },
   "Poloniex": {
-    "Apiurl": "https://poloniex.com"
+    "Apiurl": "https://poloniex.com",
+    "ApiKey": "XMZZCHUE-AL391ZAD-UE72S9YA-AJNCCCWZ"
   },
   "EmaStrategy": {
     "ShortWeight": 1,

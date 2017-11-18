@@ -61,13 +61,18 @@ namespace TraderConsole
             serviceCollection.AddTransient<IImportRepository, ImportRepository>();
             serviceCollection.AddTransient<ITraderService, RealTimeTraderService>();
             serviceCollection.AddTransient<ICandleService, CandleDbService>();
-            serviceCollection.AddTransient<IIndicatorFactory, EmaIndicatorFactory>();
+            serviceCollection.AddTransient<IIndicatorFactory, IndicatorFactory>();
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
+            serviceCollection.AddTransient<IIndicator, TsiIndicator>();
+            serviceCollection.AddTransient<IIndicator, RsiIndicator>();
 
             switch (options.Strategy)
             {
                 case Strategy.Ema:
                     serviceCollection.AddTransient<IStrategy, EmaStrategy>();
+                    break;
+                case Strategy.Rsi:
+                    serviceCollection.AddTransient<IStrategy, RsiStrategy>();
                     break;
                 case Strategy.Custom:
                     serviceCollection.AddTransient<IStrategy, CustomStrategy>();
@@ -85,9 +90,19 @@ namespace TraderConsole
             });
         }
 
+        private static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        private static ITraderService _realTimeService;
+        private static IUserBalanceService _userBalanceService;
+
         // ReSharper disable once UnusedParameter.Local
         public static void Main(string[] args)
         {
+            Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) {
+                e.Cancel = true;
+                CancellationTokenSource.Cancel();
+                Console.ReadKey();
+            };
+
             var options = new ArgumentOptions();
             var isValid = CommandLine.Parser.Default.ParseArgumentsStrict(args, options);
             if (!isValid)
@@ -99,23 +114,40 @@ namespace TraderConsole
             InitializeAutoMappers();
             var serviceProvider = Init(options);
 
+            Console.WriteLine("Starting parameters:");
+            Console.WriteLine($"\tExchange name: {options.Exchange}");
+            Console.WriteLine($"\tTrading pair: {options.TradingPair}");
+            Console.WriteLine($"\tCandle period: {options.CandlePeriod}");
+            Console.WriteLine($"\tStrategy name: {options.Strategy}");
+            Console.WriteLine();
+
             try
             {
-                var realTimeService = serviceProvider.GetService<ITraderService>();
-                var cancellationToken = new CancellationToken();
-                realTimeService.StartTradingAsync(options.TradingPair, options.CandlePeriod, cancellationToken).Wait(cancellationToken);
+                _userBalanceService = serviceProvider.GetService<IUserBalanceService>();
+                _realTimeService = serviceProvider.GetService<ITraderService>();
+
+                var utcNow = DateTime.UtcNow;
+                var delayStartInSeconds = 60 - utcNow.Second;
+                Console.WriteLine($"Delaying realtime trading start. Delay time (seconds): {delayStartInSeconds}");
+
+                Thread.Sleep(delayStartInSeconds * 1000);
+
+                Console.WriteLine();
+                Console.WriteLine("Started trading");
+                Console.WriteLine();
+
+                _realTimeService.StartTradingAsync(options.TradingPair, options.CandlePeriod, CancellationTokenSource.Token).Wait(CancellationTokenSource.Token);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception: {ex}");
             }
 
-            //Console.WriteLine("############ SUMMARY ############");
-            //Console.WriteLine($"Trading count: {realTimeService.TradingCount}");
-            //var userBalanceService = serviceProvider.GetService<IUserBalanceService>();
-            //Console.WriteLine($"Total profit: ${userBalanceService.TotalProfit}");
-            //Console.WriteLine($"Total profit %: {decimal.Round(userBalanceService.TotalPercentage, 2)}%");
-
+            Console.WriteLine("############ SUMMARY ############");
+            Console.WriteLine($"Trading count: {_realTimeService.TradingCount}");
+            Console.WriteLine($"Total profit: ${_userBalanceService.TotalProfit}");
+            Console.WriteLine($"Total profit %: {decimal.Round(_userBalanceService.TotalPercentage, 2)}%");
+            Console.WriteLine();
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }

@@ -18,10 +18,8 @@ namespace CryptoTrading.Logic.Strategies
 
         public CustomStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
         {
-            var emaIndicatorFactory1 = emaIndicatorFactory;
-            var emaOptions1 = emaOptions.Value;
-            _shortEmaIndicator = emaIndicatorFactory1.GetIndicator(emaOptions1.ShortWeight);
-            _longEmaIndicator = emaIndicatorFactory1.GetIndicator(emaOptions1.LongWeight);
+            _shortEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.ShortWeight);
+            _longEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
         }
 
         public int CandleSize => 1;
@@ -53,7 +51,7 @@ namespace CryptoTrading.Logic.Strategies
             }
             else if(_lastTrend == TrendDirection.Long)
             {
-                if (price >= _lastBuyPrice * (decimal) 1.03 || price < _lastBuyPrice * (decimal) 0.9)
+                if (price >= _lastBuyPrice * (decimal) 1.01 || price < _lastBuyPrice * (decimal) 0.995)
                 {
                     _lastTrend = TrendDirection.Short;
                 }

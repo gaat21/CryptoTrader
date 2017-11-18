@@ -7,6 +7,6 @@ namespace CryptoTrading.Logic.Providers.Interfaces
 {
     public interface IExchangeProvider
     {
-        Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, long start, CandlePeriod candlePeriod);
+        Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, CandlePeriod candlePeriod, long start, long? end);
     }
 }

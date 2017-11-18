@@ -22,9 +22,9 @@ namespace TradingTester
         public int ImportIntervalInHour { get; set; }
 
         [Option('p', "candle-period", HelpText = "Candle period")]
-        public CandlePeriod CandlePeriod { get; set; }
+        public CandlePeriod CandlePeriod { get; set; } = CandlePeriod.OneMinute;
 
         [Option('s', "strategy", HelpText = "Trading strategy")]
-        public Strategy Strategy { get; set; } = Strategy.Ema;
+        public Strategy Strategy { get; set; } = Strategy.Custom;
     }
 }

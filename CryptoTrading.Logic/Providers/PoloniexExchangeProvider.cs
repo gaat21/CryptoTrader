@@ -15,15 +15,18 @@ namespace CryptoTrading.Logic.Providers
 {
     public class PoloniexExchangeProvider : HttpBaseProvider, IExchangeProvider
     {
+        private readonly PoloniexOptions _poloniexOptions;
+
         public PoloniexExchangeProvider(IOptions<PoloniexOptions> poloniexOptions) : base(poloniexOptions.Value.ApiUrl)
         {
+            _poloniexOptions = poloniexOptions.Value;
         }
 
-        public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, long start, CandlePeriod candlePeriod)
+        public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, CandlePeriod candlePeriod, long start, long? end = null)
         {
             if (candlePeriod == CandlePeriod.OneMinute)
             {
-                var endTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                var endTime = end ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 var endPointUrl = $"/public?command=returnTradeHistory&currencyPair={tradingPair}&start={start}&end={endTime}";
                 var trades = await GetTradesAsync(endPointUrl);
                 return CandleBatcher.MergeCandleDtos(trades.ToList(), start, endTime);
@@ -39,6 +42,8 @@ namespace CryptoTrading.Logic.Providers
         {
             using (var client = GetClient())
             {
+                client.DefaultRequestHeaders.Add("Key", _poloniexOptions.ApiKey);
+
                 using (var response = await client.GetAsync(endPointUrl))
                 {
                     if (!response.IsSuccessStatusCode)
@@ -58,6 +63,8 @@ namespace CryptoTrading.Logic.Providers
         {
             using (var client = GetClient())
             {
+                client.DefaultRequestHeaders.Add("Key", _poloniexOptions.ApiKey);
+
                 using (var response = await client.GetAsync(endPointUrl))
                 {
                     if (!response.IsSuccessStatusCode)

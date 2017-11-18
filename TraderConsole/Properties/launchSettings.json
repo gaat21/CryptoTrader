@@ -2,7 +2,7 @@
   "profiles": {
     "TraderConsole": {
       "commandName": "Project",
-      "commandLineArgs": "-e Kraken -t \"XETHZUSD\""
+      "commandLineArgs": "-e Poloniex -t \"USDT_BTC\""
     }
   }
 }

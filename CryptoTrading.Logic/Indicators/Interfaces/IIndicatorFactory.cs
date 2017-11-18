@@ -2,6 +2,8 @@
 {
     public interface IIndicatorFactory
     {
-        IIndicator GetIndicator(int weight);
+        IIndicator GetEmaIndicator(int weight);
+
+        IIndicator GetRsiIndicator(int weight);
     }
 }

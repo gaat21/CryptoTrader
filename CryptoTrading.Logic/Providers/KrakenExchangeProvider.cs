@@ -14,15 +14,20 @@ using Newtonsoft.Json.Linq;
 namespace CryptoTrading.Logic.Providers
 {
     public class KrakenExchangeProvider : HttpBaseProvider, IExchangeProvider
-    {        
+    {
+        private readonly KrakenOptions _krakenOptions;
+
         public KrakenExchangeProvider(IOptions<KrakenOptions> krakenOptions) : base(krakenOptions.Value.ApiUrl)
         {
+            _krakenOptions = krakenOptions.Value;
         }
 
-        public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, long start, CandlePeriod candlePeriod)
+        public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, CandlePeriod candlePeriod, long start, long? end)
         {
             using (var client = GetClient())
             {
+                client.DefaultRequestHeaders.Add("API-Key", _krakenOptions.ApiKey);
+
                 var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={(int)candlePeriod}&since={start}";
 
                 using (var response = await client.GetAsync(endPointUrl))

@@ -9,5 +9,7 @@ namespace CryptoTrading.Logic.Repositories.Interfaces
         Task SaveCandleAsync(string tradingPair, List<CandleDto> candlesDto, long? lastScanId = null);
 
         Task<Dictionary<long, List<CandleDto>>> GetCandlesAsync(string tradingPair);
+
+        long GetLatestScanId();
     }
 }
