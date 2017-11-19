@@ -4,6 +4,7 @@
     {
         Ema,
         Rsi,
+        CandleSticks,
         Custom
     }
 }

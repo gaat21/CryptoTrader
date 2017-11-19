@@ -32,6 +32,7 @@ namespace CryptoTrading.Logic.Services
                 var currentCandle = candles[i];
                 var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
 
+                Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; Trend: {trendDirection}; Close: {currentCandle.ClosePrice}; Open: {currentCandle.OpenPrice}; High: {currentCandle.HighPrice}; Low: {currentCandle.LowPrice}");
                 if (trendDirection == TrendDirection.None)
                 {
                     //Console.WriteLine($"Nothing. Price: ${candle.ClosePrice}");

@@ -65,6 +65,7 @@ namespace TraderConsole
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
             serviceCollection.AddTransient<IIndicator, TsiIndicator>();
             serviceCollection.AddTransient<IIndicator, RsiIndicator>();
+            serviceCollection.AddTransient<IIndicator, CandleSticksIndicator>();
 
             switch (options.Strategy)
             {
@@ -73,6 +74,9 @@ namespace TraderConsole
                     break;
                 case Strategy.Rsi:
                     serviceCollection.AddTransient<IStrategy, RsiStrategy>();
+                    break;
+                case Strategy.CandleSticks:
+                    serviceCollection.AddTransient<IStrategy, CandleSticksStrategy>();
                     break;
                 case Strategy.Custom:
                     serviceCollection.AddTransient<IStrategy, CustomStrategy>();

@@ -8,6 +8,7 @@ namespace CryptoTrading.Logic.Indicators
     {
         public IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
+            // ReSharper disable once UseObjectOrCollectionInitializer
             var result = new IndicatorModel();
             result.CandleFormat = CheckHammerCandleSticks(currentCandle);
             if (result.CandleFormat != CandleFormat.None)
@@ -25,6 +26,23 @@ namespace CryptoTrading.Logic.Indicators
 
         private CandleFormat CheckHammerCandleSticks(CandleModel candle)
         {
+            if (candle.ClosePrice > candle.OpenPrice)
+            {
+                // Bullish
+                var bodySize = candle.ClosePrice - candle.OpenPrice;
+                var lowerShadow = candle.OpenPrice - candle.LowPrice;
+                var upperShadow = candle.HighPrice - candle.ClosePrice;
+
+
+            }
+            if (candle.OpenPrice > candle.ClosePrice)
+            {
+                // Bearish
+                var bodySize = candle.OpenPrice - candle.ClosePrice;
+                var lowerShadow = candle.ClosePrice - candle.LowPrice;
+                var upperShadow = candle.HighPrice - candle.OpenPrice;
+            }
+
             return CandleFormat.None;
         }
 
