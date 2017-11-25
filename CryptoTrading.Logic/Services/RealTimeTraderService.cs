@@ -25,6 +25,8 @@ namespace CryptoTrading.Logic.Services
 
         private int _tradingCount;
 
+        private static TrendDirection _lastTrendDirection;
+
         public int TradingCount => _tradingCount;
 
         public RealTimeTraderService(IStrategy strategy,
@@ -65,6 +67,8 @@ namespace CryptoTrading.Logic.Services
         {
             var lastSince = GetSinceUnixTime(candlePeriod);
             var lastScanId = _candleRepository.GetLatestScanId();
+            CandleModel currentCandle = null;
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 var startWatcher = new Stopwatch();
@@ -74,12 +78,13 @@ namespace CryptoTrading.Logic.Services
                 if (candlesList.Count == _strategy.CandleSize)
                 {
                     var prevCandles = candlesList.GetRange(0, candlesList.Count - 1);
-                    var currentCandle = candlesList.Last();
+                    currentCandle = candlesList.Last();
                     var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
 
                     await _candleRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(new List<CandleModel> {currentCandle}), lastScanId);
 
                     Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}; Volumen: {currentCandle.Volume}; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
+                    _lastTrendDirection = trendDirection;
                     if (trendDirection == TrendDirection.Long)
                     {
                         await BuyAsync(currentCandle);
@@ -98,21 +103,36 @@ namespace CryptoTrading.Logic.Services
                 lastSince = GetSinceUnixTime(candlePeriod);
                 startWatcher.Stop();
             }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                if (_lastTrendDirection == TrendDirection.Long)
+                {
+                    // ReSharper disable once MethodSupportsCancellation
+                    SellAsync(currentCandle).Wait();
+                }
+            }
         }
 
         public Task BuyAsync(CandleModel candle)
         {
-            _userBalanceService.SetBuyPrice(candle.ClosePrice);
-            Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
+            if (candle != null)
+            {
+                _userBalanceService.SetBuyPrice(candle.ClosePrice);
+                Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
+            }
 
             return Task.FromResult(0);
         }
 
         public Task SellAsync(CandleModel candle)
         {
-            Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
-            _tradingCount++;
-            Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
+            if (candle != null)
+            {
+                Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
+                _tradingCount++;
+                Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
+            }
 
             return Task.FromResult(0);
         }

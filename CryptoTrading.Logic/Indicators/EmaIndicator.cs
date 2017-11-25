@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
 

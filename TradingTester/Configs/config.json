@@ -9,7 +9,7 @@
     "Apiurl": "https://poloniex.com"
   },
   "EmaStrategy": {
-    "ShortWeight": 1,
-    "LongWeight": 5
+    "ShortWeight": 10,
+    "LongWeight": 30
   } 
 }

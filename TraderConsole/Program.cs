@@ -140,7 +140,7 @@ namespace TraderConsole
                 Console.WriteLine("Started trading");
                 Console.WriteLine();
 
-                _realTimeService.StartTradingAsync(options.TradingPair, options.CandlePeriod, CancellationTokenSource.Token).Wait(CancellationTokenSource.Token);
+                _realTimeService.StartTradingAsync(options.TradingPair, options.CandlePeriod, CancellationTokenSource.Token).Wait();
             }
             catch (Exception ex)
             {

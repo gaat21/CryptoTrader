@@ -118,7 +118,7 @@ namespace TradingTester
                 for (int i = 0; i < availableCandlePeriods.Count; i++)
                 {
                     var availableCandlePeriod = availableCandlePeriods[i];
-                    Console.WriteLine($"Options {i + 1}: {availableCandlePeriod.PeriodStart:yyyy-MM-dd hh:mm} - {availableCandlePeriod.PeriodEnd:yyyy-MM-dd hh:mm}");
+                    Console.WriteLine($"Options {i + 1}: {availableCandlePeriod.PeriodStart:yyyy-MM-dd hh:mm} - {availableCandlePeriod.PeriodEnd:yyyy-MM-dd hh:mm}; Sample count: {availableCandlePeriod.Candles.Count()}");
                     Console.WriteLine();
                     periodOptions.Add(i + 1, availableCandlePeriod.ScanId);
                 }

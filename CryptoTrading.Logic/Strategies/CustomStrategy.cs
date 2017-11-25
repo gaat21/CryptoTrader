@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
@@ -15,6 +16,7 @@ namespace CryptoTrading.Logic.Strategies
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
         private int _persistenceBuyCount;
+        private int _persistenceSellCount;
 
         public CustomStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
         {
@@ -27,13 +29,16 @@ namespace CryptoTrading.Logic.Strategies
         public async Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
             var price = currentCandle.ClosePrice;
+            var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
+            var longEmaValue = _longEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
+
+            //var emaTrend = shortEmaValue > longEmaValue ? TrendDirection.Long : TrendDirection.Short;
+            //Console.WriteLine($"Short EMA value: {shortEmaValue}; Long EMA value: {longEmaValue}; EMA Trend: {emaTrend}");
             if (_lastTrend == TrendDirection.Short)
             {
-                var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
-                var longEmaValue = _longEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
                 if (shortEmaValue > longEmaValue)
                 {
-                    if (_persistenceBuyCount > 2)
+                    if (_persistenceBuyCount > 4)
                     {
                         _lastTrend = TrendDirection.Long;
                         _lastBuyPrice = price;
@@ -51,7 +56,7 @@ namespace CryptoTrading.Logic.Strategies
             }
             else if(_lastTrend == TrendDirection.Long)
             {
-                if (price >= _lastBuyPrice * (decimal) 1.01 || price < _lastBuyPrice * (decimal) 0.995)
+                if (price >= _lastBuyPrice * (decimal) 1.01 || price < _lastBuyPrice * (decimal) 0.997)
                 {
                     _lastTrend = TrendDirection.Short;
                 }

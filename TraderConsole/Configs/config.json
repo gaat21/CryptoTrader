@@ -11,7 +11,7 @@
     "ApiKey": "XMZZCHUE-AL391ZAD-UE72S9YA-AJNCCCWZ"
   },
   "EmaStrategy": {
-    "ShortWeight": 1,
-    "LongWeight": 5
+    "ShortWeight": 10,
+    "LongWeight": 30
   } 
 }
