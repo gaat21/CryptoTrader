@@ -1,4 +1,4 @@
-﻿namespace TradingTester.Options
+﻿namespace CryptoTrading.Logic.Options
 {
     public class DatabaseOptions
     {

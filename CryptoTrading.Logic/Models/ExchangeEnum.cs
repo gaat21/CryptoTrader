@@ -1,6 +1,6 @@
 ﻿namespace CryptoTrading.Logic.Models
 {
-    public enum ExhangeEnum
+    public enum ExchangeEnum
     {
         Kraken,
         Poloniex

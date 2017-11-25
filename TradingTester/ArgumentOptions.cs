@@ -7,7 +7,7 @@ namespace TradingTester
     public class ArgumentOptions
     {
         [Option('e', "exchange", Required = true, HelpText = "Exchange. Value: Kraken, Poloniex")]
-        public ExhangeEnum Exchange { get; set; }
+        public ExchangeEnum Exchange { get; set; }
 
         [Option('t', "tradingpair", Required = true, HelpText = "Trading pair")]
         public string TradingPair { get; set; }

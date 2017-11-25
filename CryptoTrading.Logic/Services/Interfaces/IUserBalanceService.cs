@@ -2,10 +2,13 @@
 {
     public interface IUserBalanceService
     {
-        decimal TotalProfit { get; }
-
-        decimal TotalPercentage { get; }
         void SetBuyPrice(decimal price);
         decimal GetProfit(decimal sellPrice);
+        decimal LastPrice { get; set; }
+        decimal FirstPrice { get; set; }
+        decimal TotalProfit { get; }
+        decimal TotalNormalProfit { get; }
+        decimal TotalProfitPercentage { get; }
+        decimal TotalNormalProfitPercentage { get; }
     }
 }

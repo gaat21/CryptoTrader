@@ -23,6 +23,7 @@ namespace CryptoTrading.Logic.Services
         private readonly ICandleRepository _candleRepository;
         private const int DelayInMilliseconds = 60000;
 
+        private bool _isSetFirstPrice;
         private int _tradingCount;
 
         private static TrendDirection _lastTrendDirection;
@@ -79,6 +80,11 @@ namespace CryptoTrading.Logic.Services
                 {
                     var prevCandles = candlesList.GetRange(0, candlesList.Count - 1);
                     currentCandle = candlesList.Last();
+                    if (!_isSetFirstPrice)
+                    {
+                        _userBalanceService.FirstPrice = currentCandle.ClosePrice;
+                        _isSetFirstPrice = true;
+                    }
                     var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
 
                     await _candleRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(new List<CandleModel> {currentCandle}), lastScanId);
@@ -99,13 +105,15 @@ namespace CryptoTrading.Logic.Services
                     Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: [NO TRADES]; Close price: [NO TRADES]; Volumen: [NO TRADES]; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
                 }
 
-                await Task.Delay((int)(DelayInMilliseconds - startWatcher.ElapsedMilliseconds), cancellationToken);
+                // ReSharper disable once MethodSupportsCancellation
+                await Task.Delay((int)(DelayInMilliseconds - startWatcher.ElapsedMilliseconds));
                 lastSince = GetSinceUnixTime(candlePeriod);
                 startWatcher.Stop();
             }
 
             if (cancellationToken.IsCancellationRequested)
             {
+                _userBalanceService.LastPrice = currentCandle.ClosePrice;
                 if (_lastTrendDirection == TrendDirection.Long)
                 {
                     // ReSharper disable once MethodSupportsCancellation

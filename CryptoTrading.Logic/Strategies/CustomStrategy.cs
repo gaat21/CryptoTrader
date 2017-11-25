@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
@@ -15,13 +14,11 @@ namespace CryptoTrading.Logic.Strategies
         private decimal _lastBuyPrice;
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
-        private int _persistenceBuyCount;
-        private int _persistenceSellCount;
 
-        public CustomStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
+        public CustomStrategy(IIndicatorFactory indicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
         {
-            _shortEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.ShortWeight);
-            _longEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
+            _shortEmaIndicator = indicatorFactory.GetEmaIndicator(emaOptions.Value.ShortWeight);
+            _longEmaIndicator = indicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
         }
 
         public int CandleSize => 1;
@@ -32,22 +29,14 @@ namespace CryptoTrading.Logic.Strategies
             var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
             var longEmaValue = _longEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
 
-            //var emaTrend = shortEmaValue > longEmaValue ? TrendDirection.Long : TrendDirection.Short;
-            //Console.WriteLine($"Short EMA value: {shortEmaValue}; Long EMA value: {longEmaValue}; EMA Trend: {emaTrend}");
+            var emaTrend = shortEmaValue > longEmaValue ? TrendDirection.Long : TrendDirection.Short;
+            //Console.WriteLine($"Short EMA value: {shortEmaValue}; Long EMA value: {longEmaValue}; EMA Trend: {emaTrend}; Candlesticks: {candleSticksValue}");
             if (_lastTrend == TrendDirection.Short)
             {
-                if (shortEmaValue > longEmaValue)
+                if (emaTrend == TrendDirection.Long)
                 {
-                    if (_persistenceBuyCount > 4)
-                    {
-                        _lastTrend = TrendDirection.Long;
-                        _lastBuyPrice = price;
-                    }
-                    else
-                    {
-                        _persistenceBuyCount++;
-                        return await Task.FromResult(TrendDirection.None);
-                    }
+                    _lastTrend = TrendDirection.Long;
+                    _lastBuyPrice = price;
                 }
                 else
                 {
@@ -56,7 +45,8 @@ namespace CryptoTrading.Logic.Strategies
             }
             else if(_lastTrend == TrendDirection.Long)
             {
-                if (price >= _lastBuyPrice * (decimal) 1.01 || price < _lastBuyPrice * (decimal) 0.997)
+                if (price >= _lastBuyPrice * (decimal) 1.01 
+                    || price < _lastBuyPrice * (decimal) 0.997)
                 {
                     _lastTrend = TrendDirection.Short;
                 }

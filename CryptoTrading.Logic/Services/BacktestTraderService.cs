@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Models;
@@ -14,6 +15,7 @@ namespace CryptoTrading.Logic.Services
         private readonly IStrategy _strategy;
         private readonly IUserBalanceService _userBalanceService;
         private int _tradingCount;
+        private bool _hasOpenPosition;
         
         public BacktestTraderService(IStrategy strategy, IUserBalanceService userBalanceService)
         {
@@ -25,6 +27,13 @@ namespace CryptoTrading.Logic.Services
 
         public async Task CheckStrategyAsync(List<CandleModel> candles)
         {
+            if (candles.Count == 0)
+            {
+                Console.WriteLine("No candles!!");
+                return;
+            }
+
+            _userBalanceService.FirstPrice = candles.First().ClosePrice;
             for (int i = 0; i < candles.Count; i++)
             {
                 var startIndex = i - _strategy.CandleSize;
@@ -35,7 +44,10 @@ namespace CryptoTrading.Logic.Services
                 Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; Trend: {trendDirection}; Close: {currentCandle.ClosePrice}; Open: {currentCandle.OpenPrice}; High: {currentCandle.HighPrice}; Low: {currentCandle.LowPrice}");
                 if (trendDirection == TrendDirection.None)
                 {
-                    //Console.WriteLine($"Nothing. Price: ${candle.ClosePrice}");
+                    if (i == candles.Count - 1 && _hasOpenPosition)
+                    {
+                        await SellAsync(currentCandle);
+                    }
                     continue;
                 }
 
@@ -46,6 +58,8 @@ namespace CryptoTrading.Logic.Services
                 }
                 await SellAsync(currentCandle);
             }
+
+            _userBalanceService.LastPrice = candles.Last().ClosePrice;
         }
 
         public Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
@@ -55,6 +69,7 @@ namespace CryptoTrading.Logic.Services
 
         public Task SellAsync(CandleModel candle)
         {
+            _hasOpenPosition = false;
             Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
             _tradingCount++;
             Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
@@ -64,6 +79,7 @@ namespace CryptoTrading.Logic.Services
 
         public Task BuyAsync(CandleModel candle)
         {
+            _hasOpenPosition = true;
             _userBalanceService.SetBuyPrice(candle.ClosePrice);
             Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
 

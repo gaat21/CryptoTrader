@@ -7,10 +7,14 @@ namespace CryptoTrading.Logic.Services
         private decimal _buyPrice;
         private decimal _profit;
         private decimal? _firstBuyPrice;
+        public decimal LastPrice { get; set; }
+        public decimal FirstPrice { get; set; }
 
         public decimal TotalProfit => _profit;
 
-        public decimal TotalPercentage
+        public decimal TotalNormalProfit => LastPrice - FirstPrice;
+
+        public decimal TotalProfitPercentage
         {
             get
             {
@@ -21,6 +25,8 @@ namespace CryptoTrading.Logic.Services
                 return 0;
             }
         }
+
+        public decimal TotalNormalProfitPercentage => TotalNormalProfit / FirstPrice * 100;
 
         public void SetBuyPrice(decimal price)
         {
