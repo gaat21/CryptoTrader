@@ -13,5 +13,10 @@ namespace CryptoTrading.Logic.Indicators
         {
             return new RsiIndicator(weight);
         }
+
+        public IIndicator GetMfiIndicator(int weight)
+        {
+            return new MfiIndicator(weight);
+        }
     }
 }

@@ -2,6 +2,7 @@
 {
     public interface IUserBalanceService
     {
+        decimal? LastBuyPrice { get; }
         void SetBuyPrice(decimal price);
         decimal GetProfit(decimal sellPrice);
         decimal LastPrice { get; set; }

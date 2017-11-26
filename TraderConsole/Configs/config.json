@@ -13,5 +13,8 @@
   "EmaStrategy": {
     "ShortWeight": 10,
     "LongWeight": 30
-  } 
+  },
+  "MfiStrategy": {
+    "MfiWeight":  5 
+  }
 }

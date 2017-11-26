@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
+using CryptoTrading.Logic.Services.Interfaces;
 using CryptoTrading.Logic.Strategies.Interfaces;
 using Microsoft.Extensions.Options;
 
@@ -10,18 +11,20 @@ namespace CryptoTrading.Logic.Strategies
 {
     public class CustomStrategy : IStrategy
     {
+        private readonly IUserBalanceService _userBalanceService;
         private TrendDirection _lastTrend = TrendDirection.Short;
         private decimal _lastBuyPrice;
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
 
-        public CustomStrategy(IIndicatorFactory indicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
+        public CustomStrategy(IIndicatorFactory indicatorFactory, IOptions<EmaStrategyOptions> emaOptions, IUserBalanceService userBalanceService)
         {
+            _userBalanceService = userBalanceService;
             _shortEmaIndicator = indicatorFactory.GetEmaIndicator(emaOptions.Value.ShortWeight);
             _longEmaIndicator = indicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
         }
 
-        public int CandleSize => 1;
+        public int CandleSize => 5;
 
         public async Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
@@ -46,7 +49,7 @@ namespace CryptoTrading.Logic.Strategies
             else if(_lastTrend == TrendDirection.Long)
             {
                 if (price >= _lastBuyPrice * (decimal) 1.01 
-                    || price < _lastBuyPrice * (decimal) 0.997)
+                    || price < _lastBuyPrice * (decimal) 0.9975)
                 {
                     _lastTrend = TrendDirection.Short;
                 }

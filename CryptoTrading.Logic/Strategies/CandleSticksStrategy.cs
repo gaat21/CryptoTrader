@@ -10,6 +10,7 @@ namespace CryptoTrading.Logic.Strategies
     {
         private TrendDirection _lastTrend = TrendDirection.Short;
         private readonly IIndicator _candleSticksIndicator;
+        private decimal _lastBuyPrice;
         public int CandleSize => 1;
 
         public CandleSticksStrategy(IIndicator candleSticksIndicator)
@@ -30,10 +31,14 @@ namespace CryptoTrading.Logic.Strategies
             }
             if (_lastTrend == TrendDirection.Long)
             {
-                if (candleSticksValue.CandleFormat == CandleFormat.BearishMarubozu)
+                if (currentCandle.ClosePrice >= _lastBuyPrice * (decimal)1.01
+                    || candleSticksValue.CandleFormat == CandleFormat.BearishMarubozu)
                 {
                     _lastTrend = TrendDirection.Short;
-                    return Task.FromResult(_lastTrend);
+                }
+                else
+                {
+                    return Task.FromResult(TrendDirection.None);
                 }
             }
 

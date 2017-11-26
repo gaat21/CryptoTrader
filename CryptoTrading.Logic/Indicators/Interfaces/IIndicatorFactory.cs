@@ -5,5 +5,7 @@
         IIndicator GetEmaIndicator(int weight);
 
         IIndicator GetRsiIndicator(int weight);
+
+        IIndicator GetMfiIndicator(int weight);
     }
 }

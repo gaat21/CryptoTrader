@@ -6,7 +6,7 @@ namespace CryptoTrading.Logic.Services
     {
         private decimal _buyPrice;
         private decimal _profit;
-        private decimal? _firstBuyPrice;
+        public decimal? LastBuyPrice { get; private set; }
         public decimal LastPrice { get; set; }
         public decimal FirstPrice { get; set; }
 
@@ -18,9 +18,9 @@ namespace CryptoTrading.Logic.Services
         {
             get
             {
-                if (_firstBuyPrice != null)
+                if (LastBuyPrice != null)
                 {
-                    return _profit / _firstBuyPrice.Value * 100;
+                    return _profit / LastBuyPrice.Value * 100;
                 }
                 return 0;
             }
@@ -30,9 +30,9 @@ namespace CryptoTrading.Logic.Services
 
         public void SetBuyPrice(decimal price)
         {
-            if (!_firstBuyPrice.HasValue)
+            if (!LastBuyPrice.HasValue)
             {
-                _firstBuyPrice = price;
+                LastBuyPrice = price;
             }
             _buyPrice = price;
         }
