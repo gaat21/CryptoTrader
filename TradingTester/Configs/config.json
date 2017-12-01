@@ -12,6 +12,11 @@
     "ShortWeight": 10,
     "LongWeight": 30
   },
+  "MacdStrategy": {
+    "ShortWeight": 12,
+    "LongWeight": 26,
+    "Signal":  9 
+  },
   "MfiStrategy": {
     "MfiWeight": 5
   }

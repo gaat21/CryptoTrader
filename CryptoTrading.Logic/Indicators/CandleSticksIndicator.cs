@@ -6,7 +6,7 @@ namespace CryptoTrading.Logic.Indicators
 {
     public class CandleSticksIndicator : IIndicator
     {
-        public IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public IndicatorModel GetIndicatorValue(CandleModel currentCandle)
         {
             // ReSharper disable once UseObjectOrCollectionInitializer
             var result = new IndicatorModel();
@@ -22,6 +22,11 @@ namespace CryptoTrading.Logic.Indicators
             }
 
             return result;
+        }
+
+        public IndicatorModel GetIndicatorValue(decimal value)
+        {
+            throw new System.NotImplementedException();
         }
 
         private CandleFormat CheckHammerCandleSticks(CandleModel candle)

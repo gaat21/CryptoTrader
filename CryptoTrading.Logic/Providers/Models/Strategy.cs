@@ -5,6 +5,7 @@
         Ema,
         Rsi,
         Mfi,
+        Macd,
         CandleSticks,
         Custom
     }

@@ -20,7 +20,7 @@ namespace CryptoTrading.Logic.Strategies
 
         public Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
-            var rsiValue = _rsiIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
+            var rsiValue = _rsiIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             Console.WriteLine($"Rsi value: {rsiValue}");
             
             if (rsiValue < 30 && rsiValue > 0)

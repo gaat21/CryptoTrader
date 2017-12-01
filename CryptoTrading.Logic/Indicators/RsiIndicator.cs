@@ -18,17 +18,22 @@ namespace CryptoTrading.Logic.Indicators
             _prevClosePrices = new Queue<decimal>(weight);
         }
 
-        public IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public IndicatorModel GetIndicatorValue(CandleModel currentCandle)
+        {
+            return GetIndicatorValue(currentCandle.ClosePrice);
+        }
+
+        public IndicatorModel GetIndicatorValue(decimal value)
         {
             if (_prevClosePrices.Count < _weight)
             {
-                _prevClosePrices.Enqueue(currentCandle.ClosePrice);
+                _prevClosePrices.Enqueue(value);
             }
 
             if (_prevClosePrices.Count == _weight)
             {
                 _prevClosePrices.Dequeue();
-                _prevClosePrices.Enqueue(currentCandle.ClosePrice);
+                _prevClosePrices.Enqueue(value);
 
                 GetAverageValue();
                 var rsiValue = 100 - 100 / (1 + _upTrendAvg / _downTrendAvg);

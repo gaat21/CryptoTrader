@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
@@ -8,18 +9,21 @@ using Microsoft.Extensions.Options;
 
 namespace CryptoTrading.Logic.Strategies
 {
-    public class EmaStrategy : IStrategy
+    public class MacdStrategy : IStrategy
     {
-        private TrendDirection _lastTrend = TrendDirection.Short;
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
+        private readonly IIndicator _signalEmaIndicator;
+
+        private TrendDirection _lastTrend = TrendDirection.Short;
         private int _persistenceBuyCount = 1;
         private int _persistenceSellCount = 1;
 
-        public EmaStrategy(IIndicatorFactory emaIndicatorFactory, IOptions<EmaStrategyOptions> emaOptions)
+        public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
-            _shortEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.ShortWeight);
-            _longEmaIndicator = emaIndicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
+            _shortEmaIndicator = indicatorFactory.GetEmaIndicator(options.Value.ShortWeight);
+            _longEmaIndicator = indicatorFactory.GetEmaIndicator(options.Value.LongWeight);
+            _signalEmaIndicator = indicatorFactory.GetEmaIndicator(options.Value.Signal);
         }
 
         public int CandleSize => 1;
@@ -28,13 +32,20 @@ namespace CryptoTrading.Logic.Strategies
         {
             var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             var longEmaValue = _longEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
+            var emaDiffValue = shortEmaValue - longEmaValue;
+            var signalEmaValue = Math.Round(_signalEmaIndicator.GetIndicatorValue(emaDiffValue).IndicatorValue, 4);
+            var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
+
+            Console.WriteLine($"EMA(12): {shortEmaValue}; EMA(26): {longEmaValue}; MACD: {macdValue}; Signal: {signalEmaValue}; DateTs: {currentCandle.StartDateTime:s}; Close price: {currentCandle.ClosePrice}");
+
             if (_lastTrend == TrendDirection.Short)
             {
-                if (shortEmaValue > longEmaValue)
+                if (macdValue > signalEmaValue)
                 {
-                    if (_persistenceBuyCount > 2)
+                    if (_persistenceBuyCount > 1)
                     {
                         _lastTrend = TrendDirection.Long;
+                        _persistenceBuyCount = 1;
                     }
                     else
                     {
@@ -49,11 +60,12 @@ namespace CryptoTrading.Logic.Strategies
             }
             else if (_lastTrend == TrendDirection.Long)
             {
-                if (shortEmaValue < longEmaValue)
+                if (macdValue < signalEmaValue)
                 {
-                    if (_persistenceSellCount > 5)
+                    if (_persistenceSellCount > 1)
                     {
                         _lastTrend = TrendDirection.Short;
+                        _persistenceSellCount = 1;
                     }
                     else
                     {

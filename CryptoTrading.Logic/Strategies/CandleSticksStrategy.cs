@@ -20,7 +20,7 @@ namespace CryptoTrading.Logic.Strategies
 
         public Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
-            var candleSticksValue = _candleSticksIndicator.GetIndicatorValue(previousCandles, currentCandle);
+            var candleSticksValue = _candleSticksIndicator.GetIndicatorValue(currentCandle);
             if (_lastTrend == TrendDirection.Short)
             {
                 if (candleSticksValue.CandleFormat == CandleFormat.BullishMarubozu)

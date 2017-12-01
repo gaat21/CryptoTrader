@@ -19,9 +19,9 @@ namespace CryptoTrading.Logic.Indicators
         //  calculation (based on tick/day):
         //  EMA = Price(t) * k + EMA(y) * (1 – k)
         //  t = today, y = yesterday, N = number of days in EMA, k = 2 / (N+1)
-        public IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public IndicatorModel GetIndicatorValue(decimal value)
         {
-            decimal price = currentCandle.ClosePrice;
+            decimal price = value;
 
             // weight factor
             decimal k = 2 / (_weight + 1);
@@ -33,6 +33,11 @@ namespace CryptoTrading.Logic.Indicators
             _previousIndicatorValue = price * k + y * (1 - k);
 
             return new IndicatorModel {IndicatorValue = decimal.Round(_previousIndicatorValue.Value, 8)};
+        }
+
+        public IndicatorModel GetIndicatorValue(CandleModel currentCandle)
+        {
+            return GetIndicatorValue(currentCandle.ClosePrice);
         }
     }
 }

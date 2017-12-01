@@ -41,7 +41,7 @@ namespace CryptoTrading.Logic.Services
                 var currentCandle = candles[i];
                 var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
 
-                Console.WriteLine($"({i + 1}) - DateTs: {currentCandle.StartDateTime:s}; Trend: {trendDirection}; Open: {currentCandle.OpenPrice}; Close: {currentCandle.ClosePrice}; Low: {currentCandle.LowPrice}; High: {currentCandle.HighPrice}; Volumen: {currentCandle.Volume}");
+                //Console.WriteLine($"({i + 1}) - DateTs: {currentCandle.StartDateTime:s}; Trend: {trendDirection}; Open: {currentCandle.OpenPrice}; Close: {currentCandle.ClosePrice}; Low: {currentCandle.LowPrice}; High: {currentCandle.HighPrice}; Volumen: {currentCandle.Volume}");
                 if (trendDirection == TrendDirection.None)
                 {
                     if (i == candles.Count - 1 && _hasOpenPosition)

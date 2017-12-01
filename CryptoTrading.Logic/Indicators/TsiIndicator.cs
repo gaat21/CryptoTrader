@@ -24,17 +24,22 @@ namespace CryptoTrading.Logic.Indicators
             _absoluteOuterEmaIndicator = new EmaIndicator(emaOptions.Value.ShortWeight);
         }
 
-        public IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public IndicatorModel GetIndicatorValue(CandleModel currentCandle)
         {
-            var momentum = currentCandle.ClosePrice - _prevClosePrice;
+            return GetIndicatorValue(currentCandle.ClosePrice);
+        }
 
-            var innerEmaValue = _innerEmaIndicator.GetIndicatorValue(null, new CandleModel{ ClosePrice = momentum });
-            var outerEmaValue = _outerEmaIndicator.GetIndicatorValue(null, new CandleModel { ClosePrice = innerEmaValue.IndicatorValue });
+        public IndicatorModel GetIndicatorValue(decimal value)
+        {
+            var momentum = value - _prevClosePrice;
 
-            var absoluteInnerEmaValue = _absoluteInnerEmaIndicator.GetIndicatorValue(null, new CandleModel { ClosePrice = Math.Abs(momentum) });
-            var absoluteOuterEmaValue = _absoluteOuterEmaIndicator.GetIndicatorValue(null, new CandleModel { ClosePrice = absoluteInnerEmaValue.IndicatorValue });
+            var innerEmaValue = _innerEmaIndicator.GetIndicatorValue(momentum);
+            var outerEmaValue = _outerEmaIndicator.GetIndicatorValue(innerEmaValue.IndicatorValue);
 
-            _prevClosePrice = currentCandle.ClosePrice;
+            var absoluteInnerEmaValue = _absoluteInnerEmaIndicator.GetIndicatorValue(Math.Abs(momentum));
+            var absoluteOuterEmaValue = _absoluteOuterEmaIndicator.GetIndicatorValue(absoluteInnerEmaValue.IndicatorValue);
+
+            _prevClosePrice = value;
 
             return new IndicatorModel
             {

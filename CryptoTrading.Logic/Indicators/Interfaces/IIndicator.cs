@@ -5,6 +5,8 @@ namespace CryptoTrading.Logic.Indicators.Interfaces
 {
     public interface IIndicator
     {
-        IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle);
+        IndicatorModel GetIndicatorValue(CandleModel currentCandle);
+
+        IndicatorModel GetIndicatorValue(decimal value);
     }
 }

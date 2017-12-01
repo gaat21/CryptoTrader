@@ -17,7 +17,7 @@ namespace CryptoTrading.Logic.Indicators
             _moneyFlowQueue = new Queue<decimal>(weight);
         }
 
-        public IndicatorModel GetIndicatorValue(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public IndicatorModel GetIndicatorValue(CandleModel currentCandle)
         {
             var typicalPrice = (currentCandle.HighPrice + currentCandle.LowPrice + currentCandle.ClosePrice) / 3;
             var rowMoneyFlow = typicalPrice * currentCandle.Volume;
@@ -57,6 +57,11 @@ namespace CryptoTrading.Logic.Indicators
             {
                 IndicatorValue = -1
             };
+        }
+
+        public IndicatorModel GetIndicatorValue(decimal value)
+        {
+            throw new NotImplementedException();
         }
 
         private decimal CalculateMoneyRation()

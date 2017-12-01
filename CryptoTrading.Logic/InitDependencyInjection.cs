@@ -46,6 +46,7 @@ namespace CryptoTrading.Logic
 
             serviceCollection.Configure<EmaStrategyOptions>(configuration.GetSection("EmaStrategy"));
             serviceCollection.Configure<MfiStrategyOptions>(configuration.GetSection("MfiStrategy"));
+            serviceCollection.Configure<MacdStrategyOptions>(configuration.GetSection("MacdStrategy"));
             serviceCollection.AddMemoryCache();
             serviceCollection.AddDbContext<TradingDbContext>(
                 // ReSharper disable once AssignNullToNotNullAttribute
@@ -79,6 +80,9 @@ namespace CryptoTrading.Logic
                     break;
                 case Strategy.Rsi:
                     serviceCollection.AddTransient<IStrategy, RsiStrategy>();
+                    break;
+                case Strategy.Macd:
+                    serviceCollection.AddTransient<IStrategy, MacdStrategy>();
                     break;
                 case Strategy.Mfi:
                     serviceCollection.AddTransient<IStrategy, MfiStrategy>();

@@ -29,8 +29,8 @@ namespace CryptoTrading.Logic.Strategies
         public async Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
         {
             var price = currentCandle.ClosePrice;
-            var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
-            var longEmaValue = _longEmaIndicator.GetIndicatorValue(previousCandles, currentCandle).IndicatorValue;
+            var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
+            var longEmaValue = _longEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
 
             var emaTrend = shortEmaValue > longEmaValue ? TrendDirection.Long : TrendDirection.Short;
             //Console.WriteLine($"Short EMA value: {shortEmaValue}; Long EMA value: {longEmaValue}; EMA Trend: {emaTrend}; Candlesticks: {candleSticksValue}");
