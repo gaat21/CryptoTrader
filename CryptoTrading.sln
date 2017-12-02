@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2008
+VisualStudioVersion = 15.0.27004.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TradingTester", "TradingTester\TradingTester.csproj", "{7E9679A3-C81B-4D3B-80EF-61B66739B5F7}"
 EndProject
@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoTrading.DAL", "Crypto
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoTrading.Logic", "CryptoTrading.Logic\CryptoTrading.Logic.csproj", "{70FBE104-F678-49F9-B0CA-13D2CAF62E0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraderConsole", "TraderConsole\TraderConsole.csproj", "{8F9D677B-F2E8-4111-A32A-6E9A64C414F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TraderConsole", "TraderConsole\TraderConsole.csproj", "{8F9D677B-F2E8-4111-A32A-6E9A64C414F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

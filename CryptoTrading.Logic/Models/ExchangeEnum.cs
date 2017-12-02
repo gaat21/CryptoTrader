@@ -3,6 +3,7 @@
     public enum ExchangeEnum
     {
         Kraken,
-        Poloniex
+        Poloniex,
+        Bitfinex
     }
 }

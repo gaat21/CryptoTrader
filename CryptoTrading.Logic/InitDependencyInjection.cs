@@ -42,6 +42,10 @@ namespace CryptoTrading.Logic
                     serviceCollection.Configure<PoloniexOptions>(configuration.GetSection("Poloniex"));
                     serviceCollection.AddTransient<IExchangeProvider, PoloniexExchangeProvider>();
                     break;
+                case ExchangeEnum.Bitfinex:
+                    serviceCollection.Configure<BitfinexOptions>(configuration.GetSection("Bitfinex"));
+                    serviceCollection.AddTransient<IExchangeProvider, BitfinexExchangeProvider>();
+                    break;
             }
 
             serviceCollection.Configure<EmaStrategyOptions>(configuration.GetSection("EmaStrategy"));

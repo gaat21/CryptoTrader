@@ -17,4 +17,10 @@
     <ProjectReference Include="..\CryptoTrading.DAL\CryptoTrading.DAL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Configs\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -7,8 +7,13 @@
     "ApiKey": "830gvEValNSb6Cl5tO9kyXE5g4jw+btL6lCAAjgAkYbYUzCr41le0pFe"
   },
   "Poloniex": {
-    "Apiurl": "https://poloniex.com",
+    "ApiUrl": "https://poloniex.com",
     "ApiKey": "XMZZCHUE-AL391ZAD-UE72S9YA-AJNCCCWZ"
+  },
+  "Bitfinex": {
+    "ApiUrl": "https://api.bitfinex.com",
+    "ApiKey": "68WePZb20vLrJlcw7Al073Zg52wdC8dCoYRlG4b38ui",
+    "ApiSecret": "beSgQcP5Md4JjrOK5thS4HwZeYSZFr8kBRbewN69j4y"
   },
   "EmaStrategy": {
     "ShortWeight": 10,

@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\CryptoTrading.Logic\Configs\config.json" Link="Configs\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="6.2.0" />
     <PackageReference Include="CommandLineParser" Version="1.9.71" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
@@ -17,9 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Configs\config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Folder Include="Configs\" />
   </ItemGroup>
 
 </Project>
