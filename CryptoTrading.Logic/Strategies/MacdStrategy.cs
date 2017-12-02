@@ -16,9 +16,8 @@ namespace CryptoTrading.Logic.Strategies
         private readonly IIndicator _signalEmaIndicator;
 
         private TrendDirection _lastTrend = TrendDirection.Short;
-        private int _persistenceBuyCount = 1;
         private int _persistenceSellCount = 1;
-        private decimal _lastBuyPrice;
+        private decimal _maxOrMinMacd;
         private decimal? _lastMacd;
 
         public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
@@ -37,8 +36,6 @@ namespace CryptoTrading.Logic.Strategies
             var emaDiffValue = shortEmaValue - longEmaValue;
             var signalEmaValue = Math.Round(_signalEmaIndicator.GetIndicatorValue(emaDiffValue).IndicatorValue, 4);
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
-            //var macdLongThreshold = currentCandle.ClosePrice * (decimal)0.00088;
-            //var macdShortThreshold = currentCandle.ClosePrice * (decimal)0.00045;
 
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
                               $"MACD: {macdValue};" +
@@ -50,88 +47,44 @@ namespace CryptoTrading.Logic.Strategies
                 return await Task.FromResult(TrendDirection.None);
             }
 
-            var diffPreviousMacd = Math.Abs(_lastMacd.Value - macdValue);
             if (_lastTrend == TrendDirection.Short)
             {
-                if (/*_lastMacd < (decimal)-8.4*/ macdValue < 0 && diffPreviousMacd > (decimal)0.15 && macdValue > _lastMacd)
+                if (macdValue < 0 && macdValue < _lastMacd)
                 {
-                    _lastMacd = macdValue;
+                    _maxOrMinMacd = macdValue;
+                }
+
+                _lastMacd = macdValue;
+                var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
+                if (macdValue < 0 && diffPreviousMacd > 1)
+                {
                     _lastTrend = TrendDirection.Long;
-                    _lastBuyPrice = currentCandle.ClosePrice;
+                    _maxOrMinMacd = 0;
                 }
                 else
                 {
-                    _persistenceBuyCount = 1;
-                    _lastMacd = macdValue;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }
             else if (_lastTrend == TrendDirection.Long)
             {
-                if (/*_lastMacd > (decimal)4.4*/ macdValue > 0 && diffPreviousMacd > (decimal)0.15 && macdValue < _lastMacd /*|| currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.9975*/)
+                if (macdValue > 0 && macdValue > _lastMacd)
                 {
-                    _lastMacd = macdValue;
-                    if (_persistenceSellCount > 2)
-                    {
-                        _lastTrend = TrendDirection.Short;
-                    }
-                    else
-                    {
-                        _persistenceSellCount++;
-                        return await Task.FromResult(TrendDirection.None);
-                    }
+                    _maxOrMinMacd = macdValue;
+                }
+
+                _lastMacd = macdValue;
+                var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
+                if (macdValue > 0 && diffPreviousMacd > 1)
+                {
+                    _lastTrend = TrendDirection.Short;
+                    _maxOrMinMacd = 0;
                 }
                 else
                 {
-                    _persistenceSellCount = 1;
-                    _lastMacd = macdValue;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }
-
-
-            //if (_lastTrend == TrendDirection.Short)
-            //{
-            //    if (macdValue > signalEmaValue)
-            //    {
-            //        if (_persistenceBuyCount > 1)
-            //        {
-            //            _lastTrend = TrendDirection.Long;
-            //            _persistenceBuyCount = 1;
-            //            _lastBuyPrice = currentCandle.ClosePrice;
-            //        }
-            //        else
-            //        {
-            //            _persistenceBuyCount++;
-            //            return await Task.FromResult(TrendDirection.None);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        return await Task.FromResult(TrendDirection.None);
-            //    }
-            //}
-            //else if (_lastTrend == TrendDirection.Long)
-            //{
-            //    if (macdValue < signalEmaValue)
-            //    {
-            //        if (_persistenceSellCount > 2 || currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.9975)
-            //        {
-            //            _lastTrend = TrendDirection.Short;
-            //            _persistenceSellCount = 1;
-            //        }
-            //        else
-            //        {
-            //            _persistenceSellCount++;
-            //            return await Task.FromResult(TrendDirection.None);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        return await Task.FromResult(TrendDirection.None);
-            //    }
-            //}
-
 
             return await Task.FromResult(_lastTrend);
         }
