@@ -13,7 +13,7 @@ namespace CryptoTrading.Logic.AutoMapper
             CreateMap<CandleDto, CandleModel>();
             CreateMap<CandleModel, CandleDto>();
 
-            CreateMap<KrakenOhlc,CandleModel>();
+            CreateMap<KrakenCandle,CandleModel>();
             CreateMap<PoloniexCandle, CandleModel>()
                 .ForMember(dest => dest.StartDateTime, opt => opt.MapFrom(src => DateTimeOffset.FromUnixTimeSeconds(src.Date).DateTime))
                 .ForMember(dest => dest.ClosePrice, opt => opt.MapFrom(src => src.Close))

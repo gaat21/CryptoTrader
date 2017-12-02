@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
-using CryptoTrading.Logic.Utils;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CryptoTrading.Logic.Providers
 {
@@ -20,13 +19,11 @@ namespace CryptoTrading.Logic.Providers
 
         public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, CandlePeriod candlePeriod, long start, long? end)
         {
-            var endTime = end ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var endPointUrl = $"/v2/trades/{tradingPair}/hist?limit=20000&start={start}&end={endTime}";
-            var trades = await GetTradesAsync(endPointUrl);
-            return CandleBatcher.MergeCandleDtos(trades.ToList(), start, endTime);
+            var endPointUrl = $"v2/candles/trade:{(int)candlePeriod}m:{tradingPair}/last";
+            return await GetTradesAsync(endPointUrl);
         }
 
-        private async Task<IEnumerable<PoloniexTrade>> GetTradesAsync(string endPointUrl)
+        private async Task<IEnumerable<CandleModel>> GetTradesAsync(string endPointUrl)
         {
             using (var client = GetClient())
             {
@@ -38,7 +35,24 @@ namespace CryptoTrading.Logic.Providers
                     }
 
                     var resultResponseContent = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<IEnumerable<PoloniexTrade>>(resultResponseContent);
+                    var candles = new List<CandleModel>();
+                    if (resultResponseContent == "null")
+                    {
+                        return candles;
+                    }
+                    var obj = (JObject)JsonConvert.DeserializeObject(resultResponseContent);
+                    var result = obj["result"].Value<JArray>();
+                    candles.Add(new CandleModel()
+                        {
+                            StartDateTime = DateTimeOffset.FromUnixTimeSeconds((long)result[0]).DateTime,
+                            OpenPrice = (decimal)result[1],
+                            ClosePrice = (decimal)result[2],
+                            HighPrice = (decimal)result[3],
+                            LowPrice = (decimal)result[4],
+                            Volume = (decimal)result[5]
+                        });
+
+                    return candles;
                 }
             }
         }

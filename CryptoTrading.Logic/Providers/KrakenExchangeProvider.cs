@@ -47,7 +47,7 @@ namespace CryptoTrading.Logic.Providers
 
                     var krakenResult = new KrakenResult
                     {
-                        Candles = new Dictionary<string, List<KrakenOhlc>>()
+                        Candles = new Dictionary<string, List<KrakenCandle>>()
                     };
 
                     foreach (var o in result)
@@ -59,13 +59,13 @@ namespace CryptoTrading.Logic.Providers
                         else
                         {
                             var ohlc = o.Value.ToObject<decimal[][]>()
-                                .Select(v => new KrakenOhlc
+                                .Select(v => new KrakenCandle
                                 {
-                                    StartDateTime = DateTimeOffset.FromUnixTimeSeconds((long)v[0]).DateTime,
-                                    OpenPrice = v[1],
-                                    HighPrice = v[2],
-                                    LowPrice = v[3],
-                                    ClosePrice = v[4],
+                                    Date = (long)v[0],
+                                    Open = v[1],
+                                    High = v[2],
+                                    Low = v[3],
+                                    Close = v[4],
                                     VolumeWeightedPrice = v[5],
                                     Volume = v[6],
                                     TradingCount = (int) v[7]
@@ -75,7 +75,7 @@ namespace CryptoTrading.Logic.Providers
                         }
                     }
 
-                    return Mapper.Map<IEnumerable<CandleModel>>(krakenResult.Candles[tradingPair]);                    
+                    return Mapper.Map<IEnumerable<CandleModel>>(krakenResult.Candles[tradingPair]);
                 }
             }
         }

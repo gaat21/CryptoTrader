@@ -6,6 +6,6 @@ namespace CryptoTrading.Logic.Providers.Models
     {
         public long Last { get; set; }
 
-        public Dictionary<string, List<KrakenOhlc>> Candles { get; set; }
+        public Dictionary<string, List<KrakenCandle>> Candles { get; set; }
     }
 }

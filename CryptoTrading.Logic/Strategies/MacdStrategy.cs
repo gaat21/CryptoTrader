@@ -16,7 +16,7 @@ namespace CryptoTrading.Logic.Strategies
         private readonly IIndicator _signalEmaIndicator;
 
         private TrendDirection _lastTrend = TrendDirection.Short;
-        private int _persistenceSellCount = 1;
+        private decimal _lastBuyPrice;
         private decimal _maxOrMinMacd;
         private decimal? _lastMacd;
 
@@ -38,7 +38,8 @@ namespace CryptoTrading.Logic.Strategies
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
 
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
-                              $"MACD: {macdValue};" +
+                              $"MACD: {macdValue}; " +
+                              $"PeekMACD: {_maxOrMinMacd}; " +
                               $"Close price: {currentCandle.ClosePrice}; ");
 
             if (!_lastMacd.HasValue)
@@ -56,10 +57,11 @@ namespace CryptoTrading.Logic.Strategies
 
                 _lastMacd = macdValue;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (macdValue < 0 && diffPreviousMacd > 1)
+                if (macdValue < -4 && diffPreviousMacd > (decimal)0.3)
                 {
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
+                    _lastBuyPrice = currentCandle.ClosePrice;
                 }
                 else
                 {
@@ -75,7 +77,7 @@ namespace CryptoTrading.Logic.Strategies
 
                 _lastMacd = macdValue;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (macdValue > 0 && diffPreviousMacd > 1)
+                if (_maxOrMinMacd > 8 && diffPreviousMacd > (decimal)0.3 /*|| currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.9975*/)
                 {
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;
