@@ -2,7 +2,7 @@
   "profiles": {
     "TraderConsole": {
       "commandName": "Project",
-      "commandLineArgs": "-e Poloniex -t \"USDT_BTC\""
+      "commandLineArgs": "-e Bitfinex -t \"tBTCUSD\""
     }
   }
 }

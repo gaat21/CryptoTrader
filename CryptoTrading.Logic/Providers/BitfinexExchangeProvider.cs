@@ -7,7 +7,6 @@ using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace CryptoTrading.Logic.Providers
 {
@@ -40,16 +39,15 @@ namespace CryptoTrading.Logic.Providers
                     {
                         return candles;
                     }
-                    var obj = (JObject)JsonConvert.DeserializeObject(resultResponseContent);
-                    var result = obj["result"].Value<JArray>();
-                    candles.Add(new CandleModel()
+                    var result = JsonConvert.DeserializeObject<object[]>(resultResponseContent);
+                    candles.Add(new CandleModel
                         {
-                            StartDateTime = DateTimeOffset.FromUnixTimeSeconds((long)result[0]).DateTime,
+                            StartDateTime = DateTimeOffset.FromUnixTimeSeconds((long)result[0] / 1000).DateTime,
                             OpenPrice = (decimal)result[1],
                             ClosePrice = (decimal)result[2],
                             HighPrice = (decimal)result[3],
                             LowPrice = (decimal)result[4],
-                            Volume = (decimal)result[5]
+                            Volume = (long)result[5]
                         });
 
                     return candles;
