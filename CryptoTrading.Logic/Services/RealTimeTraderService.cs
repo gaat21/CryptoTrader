@@ -140,6 +140,13 @@ namespace CryptoTrading.Logic.Services
                 Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
                 _tradingCount++;
                 Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
+                Console.WriteLine();
+                Console.WriteLine($"Trading count: {TradingCount}");
+                Console.WriteLine($"Total profit: ${_userBalanceService.TotalProfit}");
+                Console.WriteLine($"Total profit %: {decimal.Round(_userBalanceService.TotalProfitPercentage, 2)}%");
+                Console.WriteLine();
+                Console.WriteLine($"Total normal profit: ${_userBalanceService.TotalNormalProfit}");
+                Console.WriteLine($"Total normal profit %: {decimal.Round(_userBalanceService.TotalNormalProfitPercentage, 2)}%");
             }
 
             return Task.FromResult(0);
