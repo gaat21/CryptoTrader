@@ -145,8 +145,6 @@ namespace CryptoTrading.Logic.Services
                 Console.WriteLine($"Total profit: ${_userBalanceService.TotalProfit}");
                 Console.WriteLine($"Total profit %: {decimal.Round(_userBalanceService.TotalProfitPercentage, 2)}%");
                 Console.WriteLine();
-                Console.WriteLine($"Total normal profit: ${_userBalanceService.TotalNormalProfit}");
-                Console.WriteLine($"Total normal profit %: {decimal.Round(_userBalanceService.TotalNormalProfitPercentage, 2)}%");
             }
 
             return Task.FromResult(0);

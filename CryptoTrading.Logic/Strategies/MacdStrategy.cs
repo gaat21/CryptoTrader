@@ -79,7 +79,10 @@ namespace CryptoTrading.Logic.Strategies
 
                 _lastMacd = macdValue;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (_maxOrMinMacd > _options.SellThreshold && diffPreviousMacd > (decimal)0.3 /*|| currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.9975*/)
+                if (_maxOrMinMacd > _options.SellThreshold 
+                    && diffPreviousMacd > (decimal)0.3
+                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.05
+                    || currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.99)
                 {
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;

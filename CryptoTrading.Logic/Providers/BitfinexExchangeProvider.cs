@@ -43,11 +43,11 @@ namespace CryptoTrading.Logic.Providers
                     candles.Add(new CandleModel
                         {
                             StartDateTime = DateTimeOffset.FromUnixTimeSeconds((long)result[0] / 1000).DateTime,
-                            OpenPrice = (decimal)result[1],
-                            ClosePrice = (decimal)result[2],
-                            HighPrice = (decimal)result[3],
-                            LowPrice = (decimal)result[4],
-                            Volume = (long)result[5]
+                            OpenPrice = decimal.Parse(result[1].ToString()),
+                            ClosePrice = decimal.Parse(result[2].ToString()),
+                            HighPrice = decimal.Parse(result[3].ToString()),
+                            LowPrice = decimal.Parse(result[4].ToString()),
+                            Volume = decimal.Parse(result[5].ToString())
                         });
 
                     return candles;
