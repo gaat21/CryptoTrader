@@ -20,6 +20,7 @@ namespace CryptoTrading.Logic.Strategies
         private decimal _maxOrMinMacd;
         private decimal? _lastMacd;
         private readonly MacdStrategyOptions _options;
+        private bool _stopTrading = false;
 
         public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -52,6 +53,11 @@ namespace CryptoTrading.Logic.Strategies
 
             if (_lastTrend == TrendDirection.Short)
             {
+                if (macdValue > 0 && _stopTrading == true)
+                {
+                    _stopTrading = false;
+                }
+
                 if (macdValue < 0 && macdValue < _lastMacd)
                 {
                     _maxOrMinMacd = macdValue;
@@ -59,7 +65,7 @@ namespace CryptoTrading.Logic.Strategies
 
                 _lastMacd = macdValue;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (macdValue < _options.BuyThreshold && diffPreviousMacd > (decimal)0.3)
+                if (_stopTrading == false && macdValue < _options.BuyThreshold && diffPreviousMacd > (decimal)0.3)
                 {
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
@@ -81,11 +87,12 @@ namespace CryptoTrading.Logic.Strategies
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (_maxOrMinMacd > _options.SellThreshold 
                     && diffPreviousMacd > (decimal)0.3
-                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.05
+                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.04
                     || currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.99)
                 {
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;
+                    _stopTrading = true;
                 }
                 else
                 {

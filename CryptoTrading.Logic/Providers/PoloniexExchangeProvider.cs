@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using CryptoTrading.Logic.Models;
@@ -16,6 +20,7 @@ namespace CryptoTrading.Logic.Providers
     public class PoloniexExchangeProvider : HttpBaseProvider, IExchangeProvider
     {
         private readonly PoloniexOptions _poloniexOptions;
+        private const string PrivateEndpointPath = "/tradingApi";
 
         public PoloniexExchangeProvider(IOptions<PoloniexOptions> poloniexOptions) : base(poloniexOptions.Value.ApiUrl)
         {
@@ -38,6 +43,37 @@ namespace CryptoTrading.Logic.Providers
             }
         }
 
+        public async Task<OrderResult> CreateOrder(string tradingPair, decimal rate, decimal amount)
+        {
+            var formParameters = $"currencyPair={tradingPair}&rate={rate}&amount={amount}";
+            var hmacHash = new HMACSHA512(Encoding.UTF8.GetBytes(_poloniexOptions.ApiSecret));
+            var signedParametersByteArray = hmacHash.ComputeHash(Encoding.UTF8.GetBytes(formParameters));
+
+            using (var client = GetClient())
+            {
+                client.DefaultRequestHeaders.Add("Key", _poloniexOptions.ApiKey);
+                client.DefaultRequestHeaders.Add("Sign", BitConverter.ToString(signedParametersByteArray).Replace("-", ""));
+
+                var requestBody = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("currencyPair", tradingPair),
+                    new KeyValuePair<string, string>("rate", rate.ToString(CultureInfo.InvariantCulture)),
+                    new KeyValuePair<string, string>("amount", amount.ToString(CultureInfo.InvariantCulture))
+                });
+                
+                using (var response = await client.PostAsync(PrivateEndpointPath, requestBody))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}");
+                    }
+
+                    var resultResponseContent = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<PoloniexOrderResult>(resultResponseContent);
+                }
+            }
+        }
+        
         private async Task<IEnumerable<CandleModel>> GetCandlesAsync(string endPointUrl)
         {
             using (var client = GetClient())

@@ -79,5 +79,10 @@ namespace CryptoTrading.Logic.Providers
                 }
             }
         }
+
+        public Task<OrderResult> CreateOrder(string tradingPair, decimal rate, decimal amount)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

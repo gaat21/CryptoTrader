@@ -22,6 +22,11 @@ namespace CryptoTrading.Logic.Providers
             return await GetTradesAsync(endPointUrl);
         }
 
+        public Task<OrderResult> CreateOrder(string tradingPair, decimal rate, decimal amount)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task<IEnumerable<CandleModel>> GetTradesAsync(string endPointUrl)
         {
             using (var client = GetClient())
