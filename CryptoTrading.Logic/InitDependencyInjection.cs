@@ -51,6 +51,8 @@ namespace CryptoTrading.Logic
             serviceCollection.Configure<EmaStrategyOptions>(configuration.GetSection("EmaStrategy"));
             serviceCollection.Configure<MfiStrategyOptions>(configuration.GetSection("MfiStrategy"));
             serviceCollection.Configure<MacdStrategyOptions>(configuration.GetSection("MacdStrategy"));
+            serviceCollection.Configure<CryptoTradingOptions>(configuration.GetSection("CryptoTrading"));
+            serviceCollection.Configure<EmailOptions>(configuration.GetSection("Email"));
             serviceCollection.AddMemoryCache();
             serviceCollection.AddDbContext<TradingDbContext>(
                 // ReSharper disable once AssignNullToNotNullAttribute
@@ -71,6 +73,7 @@ namespace CryptoTrading.Logic
                 serviceCollection.AddTransient<ITraderService, RealTimeTraderService>();
             }
             serviceCollection.AddTransient<ICandleService, CandleDbService>();
+            serviceCollection.AddTransient<IEmailService, EmailService>();
             serviceCollection.AddTransient<IIndicatorFactory, IndicatorFactory>();
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
             serviceCollection.AddTransient<IIndicator, TsiIndicator>();

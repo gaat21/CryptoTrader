@@ -1,4 +1,10 @@
 ﻿{
+  "CryptoTrading": {
+    "AmountInUsdt": 100
+  },
+  "Email": {
+    "Enable": false
+  },
   "Database": {
     "ConnectionString": "server=localhost;database=trading;user id=root;password=123456;SslMode=none"
   },
@@ -8,7 +14,8 @@
   },
   "Poloniex": {
     "ApiUrl": "https://poloniex.com",
-    "ApiKey": ""
+    "ApiKey": "",
+    "ApiSecret": ""
   },
   "Bitfinex": {
     "ApiUrl": "https://api.bitfinex.com",
@@ -24,7 +31,7 @@
     "LongWeight": 26,
     "Signal": 9,
     "BuyThreshold": -4.0,
-    "SellThreshold":  8.0
+    "SellThreshold": 8.0
   },
   "MfiStrategy": {
     "MfiWeight": 5

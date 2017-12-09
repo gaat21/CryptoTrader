@@ -21,6 +21,7 @@ namespace CryptoTrading.Logic.Services
         private readonly IUserBalanceService _userBalanceService;
         private readonly IExchangeProvider _exchangeProvider;
         private readonly ICandleRepository _candleRepository;
+        private readonly IEmailService _emailService;
         private const int DelayInMilliseconds = 60000;
 
         private bool _isSetFirstPrice;
@@ -33,12 +34,14 @@ namespace CryptoTrading.Logic.Services
         public RealTimeTraderService(IStrategy strategy,
                                      IUserBalanceService userBalanceService,
                                      IExchangeProvider exchangeProvider, 
-                                     ICandleRepository candleRepository)
+                                     ICandleRepository candleRepository,
+                                     IEmailService emailService)
         {
             _strategy = strategy;
             _userBalanceService = userBalanceService;
             _exchangeProvider = exchangeProvider;
             _candleRepository = candleRepository;
+            _emailService = emailService;
         }
 
         public async Task CheckStrategyAsync(List<CandleModel> candles)
@@ -113,11 +116,14 @@ namespace CryptoTrading.Logic.Services
 
             if (cancellationToken.IsCancellationRequested)
             {
-                _userBalanceService.LastPrice = currentCandle.ClosePrice;
-                if (_lastTrendDirection == TrendDirection.Long)
+                if (currentCandle != null)
                 {
-                    // ReSharper disable once MethodSupportsCancellation
-                    SellAsync(currentCandle).Wait();
+                    _userBalanceService.LastPrice = currentCandle.ClosePrice;
+                    if (_lastTrendDirection == TrendDirection.Long)
+                    {
+                        // ReSharper disable once MethodSupportsCancellation
+                        SellAsync(currentCandle).Wait();
+                    }
                 }
             }
         }
@@ -127,7 +133,9 @@ namespace CryptoTrading.Logic.Services
             if (candle != null)
             {
                 _userBalanceService.SetBuyPrice(candle.ClosePrice);
-                Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
+                var msg = $"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}";
+                Console.WriteLine(msg);
+                _emailService.SendEmail("Buying", msg);
             }
 
             return Task.FromResult(0);
@@ -137,14 +145,19 @@ namespace CryptoTrading.Logic.Services
         {
             if (candle != null)
             {
-                Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
                 _tradingCount++;
-                Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
-                Console.WriteLine();
-                Console.WriteLine($"Trading count: {TradingCount}");
-                Console.WriteLine($"Total profit: ${_userBalanceService.TotalProfit}");
-                Console.WriteLine($"Total profit %: {decimal.Round(_userBalanceService.TotalProfitPercentage, 2)}%");
-                Console.WriteLine();
+
+                var msg = $"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}\n" +
+                          $"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}\n" +
+                          "\n" +
+                          $"Trading count: {TradingCount}\n" +
+                          $"Total profit: ${_userBalanceService.TotalProfit}\n" +
+                          $"Total profit %: {decimal.Round(_userBalanceService.TotalProfitPercentage, 2)}%\n" +
+                          "\n";
+
+                Console.WriteLine(msg);
+
+                _emailService.SendEmail("Selling", msg);
             }
 
             return Task.FromResult(0);
