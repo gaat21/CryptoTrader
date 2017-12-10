@@ -14,7 +14,6 @@ namespace CryptoTrading.Logic.Services
     {
         private readonly IStrategy _strategy;
         private readonly IUserBalanceService _userBalanceService;
-        private int _tradingCount;
         private bool _hasOpenPosition;
         
         public BacktestTraderService(IStrategy strategy, IUserBalanceService userBalanceService)
@@ -22,8 +21,6 @@ namespace CryptoTrading.Logic.Services
             _strategy = strategy;
             _userBalanceService = userBalanceService;
         }
-
-        public int TradingCount => _tradingCount;
 
         public async Task CheckStrategyAsync(List<CandleModel> candles)
         {
@@ -70,9 +67,12 @@ namespace CryptoTrading.Logic.Services
         public Task SellAsync(CandleModel candle)
         {
             _hasOpenPosition = false;
-            Console.WriteLine($"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
-            _tradingCount++;
-            Console.WriteLine($"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}");
+            _userBalanceService.TradingCount++;
+            var profit = _userBalanceService.GetProfit(candle.ClosePrice);
+            var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n" +
+                      $"Profit: ${profit.Profit}\n";
+
+            Console.WriteLine(msg);
 
             return Task.FromResult(0);
         }
@@ -81,7 +81,7 @@ namespace CryptoTrading.Logic.Services
         {
             _hasOpenPosition = true;
             _userBalanceService.SetBuyPrice(candle.ClosePrice);
-            Console.WriteLine($"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}");
+            Console.WriteLine($"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n");
 
             return Task.FromResult(0);
         }

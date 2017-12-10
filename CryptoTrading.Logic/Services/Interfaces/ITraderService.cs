@@ -8,7 +8,6 @@ namespace CryptoTrading.Logic.Services.Interfaces
 {
     public interface ITraderService
     {
-        int TradingCount { get; }
         Task CheckStrategyAsync(List<CandleModel> candles);
         Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken);
         Task BuyAsync(CandleModel candle);

@@ -72,13 +72,7 @@ namespace TraderConsole
             }
 
             Console.WriteLine("############ SUMMARY ############");
-            Console.WriteLine($"Trading count: {_realTimeService.TradingCount}");
-            Console.WriteLine($"Total profit: ${_userBalanceService.TotalProfit}");
-            Console.WriteLine($"Total profit %: {decimal.Round(_userBalanceService.TotalProfitPercentage, 2)}%");
-            Console.WriteLine();
-            Console.WriteLine($"Total normal profit: ${_userBalanceService.TotalNormalProfit}");
-            Console.WriteLine($"Total normal profit %: {decimal.Round(_userBalanceService.TotalNormalProfitPercentage, 2)}%");
-            Console.WriteLine();
+            Console.WriteLine(_userBalanceService.TradingSummary());
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }

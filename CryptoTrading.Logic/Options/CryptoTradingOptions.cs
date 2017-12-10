@@ -2,6 +2,6 @@
 {
     public class CryptoTradingOptions
     {
-        public int AmountInUsdt { get; set; }
+        public decimal AmountInUsdt { get; set; }
     }
 }

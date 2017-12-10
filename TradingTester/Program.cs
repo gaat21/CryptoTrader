@@ -66,13 +66,8 @@ namespace TradingTester
                 backtesTraderService.CheckStrategyAsync(candles);
                 
                 Console.WriteLine("############ SUMMARY ############");
-                Console.WriteLine($"Trading count: {backtesTraderService.TradingCount}");
                 var userBalanceService = serviceProvider.GetService<IUserBalanceService>();
-                Console.WriteLine($"Total profit: ${userBalanceService.TotalProfit}");
-                Console.WriteLine($"Total profit %: {decimal.Round(userBalanceService.TotalProfitPercentage, 2)}%");
-                Console.WriteLine();
-                Console.WriteLine($"Total normal profit: ${userBalanceService.TotalNormalProfit}");
-                Console.WriteLine($"Total normal profit %: {decimal.Round(userBalanceService.TotalNormalProfitPercentage, 2)}%");
+                Console.WriteLine(userBalanceService.TradingSummary());
             }
 
             if (options.EnableImport)

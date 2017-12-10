@@ -25,11 +25,8 @@ namespace CryptoTrading.Logic.Services
         private const int DelayInMilliseconds = 60000;
 
         private bool _isSetFirstPrice;
-        private int _tradingCount;
 
         private static TrendDirection _lastTrendDirection;
-
-        public int TradingCount => _tradingCount;
 
         public RealTimeTraderService(IStrategy strategy,
                                      IUserBalanceService userBalanceService,
@@ -133,7 +130,7 @@ namespace CryptoTrading.Logic.Services
             if (candle != null)
             {
                 _userBalanceService.SetBuyPrice(candle.ClosePrice);
-                var msg = $"Buy crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}";
+                var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n";
                 Console.WriteLine(msg);
                 _emailService.SendEmail("Buying", msg);
             }
@@ -145,15 +142,12 @@ namespace CryptoTrading.Logic.Services
         {
             if (candle != null)
             {
-                _tradingCount++;
-
-                var msg = $"Sell crypto currency. Price: ${candle.ClosePrice}. Date: {candle.StartDateTime}\n" +
-                          $"Profit: ${_userBalanceService.GetProfit(candle.ClosePrice)}\n" +
+                _userBalanceService.TradingCount++;
+                var profit = _userBalanceService.GetProfit(candle.ClosePrice);
+                var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n" +
+                          $"Profit: ${profit.Profit}\n" +
                           "\n" +
-                          $"Trading count: {TradingCount}\n" +
-                          $"Total profit: ${_userBalanceService.TotalProfit}\n" +
-                          $"Total profit %: {decimal.Round(_userBalanceService.TotalProfitPercentage, 2)}%\n" +
-                          "\n";
+                          _userBalanceService.TradingSummary();
 
                 Console.WriteLine(msg);
 
