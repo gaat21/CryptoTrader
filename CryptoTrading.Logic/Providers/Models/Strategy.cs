@@ -6,6 +6,7 @@
         Rsi,
         Mfi,
         Macd,
+        LtcMacd,
         CandleSticks,
         Custom
     }

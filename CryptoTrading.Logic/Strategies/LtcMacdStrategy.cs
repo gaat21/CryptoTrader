@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace CryptoTrading.Logic.Strategies
 {
-    public class MacdStrategy : IStrategy
+    public class LtcMacdStrategy : IStrategy
     {
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
@@ -22,7 +22,7 @@ namespace CryptoTrading.Logic.Strategies
         private readonly MacdStrategyOptions _options;
         private bool _stopTrading;
 
-        public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
+        public LtcMacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
             _options = options.Value;
             _shortEmaIndicator = indicatorFactory.GetEmaIndicator(_options.ShortWeight);
@@ -64,8 +64,7 @@ namespace CryptoTrading.Logic.Strategies
                 }
 
                 _lastMacd = macdValue;
-                var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (_stopTrading == false && macdValue < _options.BuyThreshold && diffPreviousMacd > (decimal)0.3)
+                if (_stopTrading == false && macdValue < _options.BuyThreshold)
                 {
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
@@ -84,11 +83,8 @@ namespace CryptoTrading.Logic.Strategies
                 }
 
                 _lastMacd = macdValue;
-                var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (_maxOrMinMacd > _options.SellThreshold 
-                    && diffPreviousMacd > (decimal)0.3
-                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.04
-                    /*|| currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.99*/)
+                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.04)
                 {
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;

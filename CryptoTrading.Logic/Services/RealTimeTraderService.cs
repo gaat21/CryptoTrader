@@ -23,6 +23,7 @@ namespace CryptoTrading.Logic.Services
         private readonly ICandleRepository _candleRepository;
         private readonly IEmailService _emailService;
         private const int DelayInMilliseconds = 60000;
+        private string _tradingPair;
 
         private bool _isSetFirstPrice;
 
@@ -66,6 +67,7 @@ namespace CryptoTrading.Logic.Services
 
         public async Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
         {
+            _tradingPair = tradingPair;
             var lastSince = GetSinceUnixTime(candlePeriod);
             var lastScanId = _candleRepository.GetLatestScanId();
             CandleModel currentCandle = null;
@@ -107,7 +109,7 @@ namespace CryptoTrading.Logic.Services
 
                 // ReSharper disable once MethodSupportsCancellation
                 await Task.Delay((int)(DelayInMilliseconds - startWatcher.ElapsedMilliseconds));
-                lastSince = GetSinceUnixTime(candlePeriod);
+                lastSince += (int) candlePeriod * _strategy.CandleSize * 60;
                 startWatcher.Stop();
             }
 
@@ -132,7 +134,7 @@ namespace CryptoTrading.Logic.Services
                 _userBalanceService.SetBuyPrice(candle.ClosePrice);
                 var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n";
                 Console.WriteLine(msg);
-                _emailService.SendEmail("Buying", msg);
+                _emailService.SendEmail($"Buying {_tradingPair}", msg);
             }
 
             return Task.FromResult(0);
@@ -151,7 +153,7 @@ namespace CryptoTrading.Logic.Services
 
                 Console.WriteLine(msg);
 
-                _emailService.SendEmail("Selling", msg);
+                _emailService.SendEmail($"Selling {_tradingPair}", msg);
             }
 
             return Task.FromResult(0);
