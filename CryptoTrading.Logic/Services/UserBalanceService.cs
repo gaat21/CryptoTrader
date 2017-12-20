@@ -9,7 +9,6 @@ namespace CryptoTrading.Logic.Services
     public class UserBalanceService : IUserBalanceService
     {
         private decimal _profit;
-        private decimal _rate;
         private readonly decimal _defaultAmount;
 
         public UserBalanceService(IOptions<CryptoTradingOptions> cryptoTradingOptions)
@@ -19,7 +18,7 @@ namespace CryptoTrading.Logic.Services
 
         ProfitModel IUserBalanceService.GetProfit(decimal sellPrice)
         {
-            var sellProfit = sellPrice * _rate - _defaultAmount;
+            var sellProfit = sellPrice * Rate - _defaultAmount;
             _profit += sellProfit;
             LastPrice = sellPrice;
             return GetProfit(sellProfit);
@@ -58,11 +57,15 @@ namespace CryptoTrading.Logic.Services
 
         public int TradingCount { get; set; }
 
-        public decimal Rate => _rate;
+        public decimal Rate { get; set; }
 
         public void SetBuyPrice(decimal buyPrice)
         {
-            _rate = Math.Round(_defaultAmount / buyPrice, 8);
+            Rate = Math.Round(_defaultAmount / buyPrice, 8);
         }
+
+        public bool HasOpenOrder { get; set; } = false;
+
+        public long OpenOrderNumber { get; set; }
     }
 }

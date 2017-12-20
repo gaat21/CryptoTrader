@@ -2,8 +2,14 @@
 
 namespace CryptoTrading.Logic.Providers.Models
 {
-    public class ResultingTrades
+    public class OrderDetail
     {
+        public string CurrencyPair { get; set; }
+
+        public int GlobalTradeId { get; set; }
+
+        public decimal Fee { get; set; }
+
         public decimal Amount { get; set; }
 
         public DateTime Date { get; set; }

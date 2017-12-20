@@ -15,6 +15,9 @@ namespace TradingTester
         [Option('b', "backtest", HelpText = "Backtesting imported data")]
         public bool EnableBacktest { get; set; }
 
+        [Option('o', "ordertest", HelpText = "Order testing")]
+        public bool EnableOrderTesting { get; set; }
+
         [Option('i', "import", HelpText = "Imported data")]
         public bool EnableImport { get; set; }
 

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using CryptoTrading.Logic;
+using CryptoTrading.Logic.Providers.Interfaces;
+using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Repositories.Interfaces;
 using CryptoTrading.Logic.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using TradingTester.AutoMapper;
 
 namespace TradingTester
@@ -75,6 +78,26 @@ namespace TradingTester
                 var importProvider = serviceProvider.GetService<IImportRepository>();
                 var candles = importProvider.ImportCandlesAsync(options.TradingPair, options.ImportIntervalInHour, options.CandlePeriod).Result;
                 Console.WriteLine($"Imported candle count: {candles.Count()}");
+            }
+
+            if (options.EnableOrderTesting)
+            {
+                var exchangeProvider = serviceProvider.GetService<IExchangeProvider>();
+
+                decimal price = 19150;
+                decimal defaultAmount = 10;
+                //var orderBook = exchangeProvider.GetOrderBook(options.TradingPair, 1).Result;
+                //price = orderBook.SellOrders.First();
+                var ticker = exchangeProvider.GetTicker(options.TradingPair).Result;
+                price = ticker.HighestBid;
+                //var balance = exchangeProvider.GetBalanceAsync().Result;
+                var rate = Math.Round(defaultAmount / price, 8);
+                //var orderNumber = exchangeProvider.CreateOrderAsync(TradeType.Buy, options.TradingPair, price, rate).Result;
+                //var result = exchangeProvider.CancelOrderAsync(orderNumber).Result;
+                //ticker = exchangeProvider.GetTicker(options.TradingPair).Result;
+                //price = ticker.HighestBid;
+                var orderNumber2 = exchangeProvider.CreateOrderAsync(TradeType.Sell, options.TradingPair, price, (decimal)0.00057228).Result;
+                //var a = exchangeProvider.GetOrderBook(options.TradingPair, 1).Result;
             }
         }
     }

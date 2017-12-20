@@ -6,6 +6,6 @@ namespace CryptoTrading.Logic.Providers.Models
     {
         public int OrderNumber { get; set; }
 
-        public IList<ResultingTrades> ResultingTrades { get; set; }
+        public IList<PoloniexTrade> ResultingTrades { get; set; }
     }
 }

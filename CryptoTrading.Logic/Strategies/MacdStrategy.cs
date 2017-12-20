@@ -65,7 +65,9 @@ namespace CryptoTrading.Logic.Strategies
 
                 _lastMacd = macdValue;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (_stopTrading == false && macdValue < _options.BuyThreshold && diffPreviousMacd > (decimal)0.3)
+                if (_stopTrading == false 
+                    && macdValue < _options.BuyThreshold 
+                    && diffPreviousMacd > (decimal)0.3)
                 {
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
@@ -83,19 +85,26 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = macdValue;
                 }
 
-                _lastMacd = macdValue;
+                if (macdValue < 0)
+                {
+                    _maxOrMinMacd = 0;
+                }
+
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (_maxOrMinMacd > _options.SellThreshold 
-                    && diffPreviousMacd > (decimal)0.3
-                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.04
+                    && _lastMacd > macdValue
+                    && diffPreviousMacd > (decimal)0.5
+                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.01
                     /*|| currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.99*/)
                 {
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;
                     _stopTrading = true;
+                    _lastMacd = macdValue;
                 }
                 else
                 {
+                    _lastMacd = macdValue;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }

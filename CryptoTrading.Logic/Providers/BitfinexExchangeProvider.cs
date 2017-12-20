@@ -22,7 +22,32 @@ namespace CryptoTrading.Logic.Providers
             return await GetTradesAsync(endPointUrl);
         }
 
-        public Task<OrderResult> CreateOrder(string tradingPair, decimal rate, decimal amount)
+        public Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> CancelOrderAsync(long orderNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetBalanceAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OrderBook> GetOrderBook(string tradingPair, int depth)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Ticker> GetTicker(string tradingPair)
         {
             throw new NotImplementedException();
         }

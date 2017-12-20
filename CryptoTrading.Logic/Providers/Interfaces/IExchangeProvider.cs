@@ -9,6 +9,16 @@ namespace CryptoTrading.Logic.Providers.Interfaces
     {
         Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, CandlePeriod candlePeriod, long start, long? end);
 
-        Task<OrderResult> CreateOrder(string tradingPair, decimal rate, decimal amount);
+        Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount);
+
+        Task<bool> CancelOrderAsync(long orderNumber);
+
+        Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber);
+
+        Task<string> GetBalanceAsync();
+
+        Task<OrderBook> GetOrderBook(string tradingPair, int depth);
+
+        Task<Ticker> GetTicker(string tradingPair);
     }
 }

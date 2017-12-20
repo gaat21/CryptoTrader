@@ -12,6 +12,7 @@ using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Repositories.Interfaces;
 using CryptoTrading.Logic.Services.Interfaces;
 using CryptoTrading.Logic.Strategies.Interfaces;
+using Newtonsoft.Json;
 
 namespace CryptoTrading.Logic.Services
 {
@@ -28,6 +29,7 @@ namespace CryptoTrading.Logic.Services
         private bool _isSetFirstPrice;
 
         private static TrendDirection _lastTrendDirection;
+        private CancellationToken _cancellationToken;
 
         public RealTimeTraderService(IStrategy strategy,
                                      IUserBalanceService userBalanceService,
@@ -67,6 +69,7 @@ namespace CryptoTrading.Logic.Services
 
         public async Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
         {
+            _cancellationToken = cancellationToken;
             _tradingPair = tradingPair;
             var lastSince = GetSinceUnixTime(candlePeriod);
             var lastScanId = _candleRepository.GetLatestScanId();
@@ -127,26 +130,47 @@ namespace CryptoTrading.Logic.Services
             }
         }
 
-        public Task BuyAsync(CandleModel candle)
+        public async Task BuyAsync(CandleModel candle)
         {
             if (candle != null)
             {
-                _userBalanceService.SetBuyPrice(candle.ClosePrice);
-                var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n";
+                if (_userBalanceService.HasOpenOrder)
+                {
+                    return;
+                }
+
+                var buyPrice = _exchangeProvider.GetTicker(_tradingPair).Result.LowestAsk;
+                _userBalanceService.SetBuyPrice(buyPrice);
+                _userBalanceService.OpenOrderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Buy, _tradingPair, buyPrice, _userBalanceService.Rate);
+                _userBalanceService.HasOpenOrder = true;
+
+                await CheckOrderInvoked(_userBalanceService.OpenOrderNumber, TradeType.Buy);
+
+                var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${buyPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {_userBalanceService.OpenOrderNumber}\n";
                 Console.WriteLine(msg);
                 _emailService.SendEmail($"Buying {_tradingPair}", msg);
             }
-
-            return Task.FromResult(0);
         }
 
-        public Task SellAsync(CandleModel candle)
+        public async Task SellAsync(CandleModel candle)
         {
             if (candle != null)
             {
+                if (_userBalanceService.HasOpenOrder)
+                {
+                    await _exchangeProvider.CancelOrderAsync(_userBalanceService.OpenOrderNumber);
+                    return;
+                }
+
+                var sellPrice = _exchangeProvider.GetTicker(_tradingPair).Result.HighestBid;
                 _userBalanceService.TradingCount++;
-                var profit = _userBalanceService.GetProfit(candle.ClosePrice);
-                var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n" +
+                var orderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Sell, _tradingPair, sellPrice, _userBalanceService.Rate);
+                _userBalanceService.HasOpenOrder = true;
+
+                await CheckOrderInvoked(orderNumber, TradeType.Sell);
+
+                var profit = _userBalanceService.GetProfit(sellPrice);
+                var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${sellPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {orderNumber}\n" +
                           $"Profit: ${profit.Profit}\n" +
                           "\n" +
                           _userBalanceService.TradingSummary();
@@ -155,8 +179,35 @@ namespace CryptoTrading.Logic.Services
 
                 _emailService.SendEmail($"Selling {_tradingPair}", msg);
             }
+        }
 
-            return Task.FromResult(0);
+        private async Task CheckOrderInvoked(long orderNumber, TradeType tradeType)
+        {
+            await Task.Factory.StartNew(async () =>
+            {
+                while (_userBalanceService.HasOpenOrder)
+                {
+                    if (_cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    Thread.Sleep(20000); // sleep 20 seconds
+
+                    var orderDetails = await _exchangeProvider.GetOrderAsync(orderNumber);
+                    if (orderDetails != null)
+                    {
+                        var orderDetail = orderDetails.First();
+                        Console.WriteLine($"Open order invoked. OrderNumber: {orderNumber}; OrderDetails: {JsonConvert.SerializeObject(orderDetail)}");
+                        if (tradeType == TradeType.Buy)
+                        {
+                            _userBalanceService.Rate -= Math.Round(_userBalanceService.Rate * orderDetail.Fee, 8);
+                            Console.WriteLine($"Real rate: {_userBalanceService.Rate}");
+                        }
+                        _userBalanceService.HasOpenOrder = false;
+                    }
+                }
+            }, _cancellationToken);
         }
 
         private long GetSinceUnixTime(CandlePeriod candlePeriod)

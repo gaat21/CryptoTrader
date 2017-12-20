@@ -28,7 +28,7 @@ namespace CryptoTrading.Logic.Providers
             {
                 client.DefaultRequestHeaders.Add("API-Key", _krakenOptions.ApiKey);
 
-                var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={(int)candlePeriod}&since={start}";
+                var endPointUrl = $"/0/public/OHLC?pair={tradingPair}&interval={(int) candlePeriod}&since={start}";
 
                 using (var response = await client.GetAsync(endPointUrl))
                 {
@@ -38,8 +38,8 @@ namespace CryptoTrading.Logic.Providers
                     }
 
                     var resultResponseContent = await response.Content.ReadAsStringAsync();
-                    var obj = (JObject)JsonConvert.DeserializeObject(resultResponseContent);
-                    var err = (JArray)obj["error"];
+                    var obj = (JObject) JsonConvert.DeserializeObject(resultResponseContent);
+                    var err = (JArray) obj["error"];
                     if (err.Count != 0)
                         throw new Exception(err[0].ToString());
 
@@ -61,7 +61,7 @@ namespace CryptoTrading.Logic.Providers
                             var ohlc = o.Value.ToObject<decimal[][]>()
                                 .Select(v => new KrakenCandle
                                 {
-                                    Date = (long)v[0],
+                                    Date = (long) v[0],
                                     Open = v[1],
                                     High = v[2],
                                     Low = v[3],
@@ -80,7 +80,32 @@ namespace CryptoTrading.Logic.Providers
             }
         }
 
-        public Task<OrderResult> CreateOrder(string tradingPair, decimal rate, decimal amount)
+        public Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> CancelOrderAsync(long orderNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetBalanceAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OrderBook> GetOrderBook(string tradingPair, int depth)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Ticker> GetTicker(string tradingPair)
         {
             throw new NotImplementedException();
         }
