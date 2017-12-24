@@ -55,7 +55,7 @@ namespace TraderConsole
                 _realTimeService = serviceProvider.GetService<ITraderService>();
 
                 var utcNow = DateTime.UtcNow;
-                var delayStartInSeconds = 60 - utcNow.Second;
+                var delayStartInSeconds = (int)options.CandlePeriod * 60 - utcNow.Minute % (int)options.CandlePeriod * 60 - utcNow.Second;
                 Console.WriteLine($"Delaying realtime trading start. Delay time (seconds): {delayStartInSeconds}");
 
                 Thread.Sleep(delayStartInSeconds * 1000);

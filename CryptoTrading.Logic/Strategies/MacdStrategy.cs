@@ -17,10 +17,14 @@ namespace CryptoTrading.Logic.Strategies
 
         private TrendDirection _lastTrend = TrendDirection.Short;
         private decimal _lastBuyPrice;
+        private decimal _lastSellPrice;
         private decimal _maxOrMinMacd;
         private decimal? _lastMacd;
         private readonly MacdStrategyOptions _options;
         private bool _stopTrading;
+        private bool _firstBuyFinished = false;
+        private int _candleCount = 1;
+        private int _stopCount = 1;
 
         public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -42,12 +46,21 @@ namespace CryptoTrading.Logic.Strategies
 
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
                               $"MACD: {macdValue}; " +
+                              $"Signal: {signalEmaValue}; " +
+                              $"Histrogram: {macdValue - signalEmaValue}; " +
                               $"PeekMACD: {_maxOrMinMacd}; " +
                               $"Close price: {currentCandle.ClosePrice}; ");
 
             if (!_lastMacd.HasValue)
             {
                 _lastMacd = macdValue;
+                return await Task.FromResult(TrendDirection.None);
+            }
+
+            // wait 1 hour
+            if (_candleCount <= 60)
+            {
+                _candleCount++;
                 return await Task.FromResult(TrendDirection.None);
             }
 
@@ -67,8 +80,23 @@ namespace CryptoTrading.Logic.Strategies
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (_stopTrading == false 
                     && macdValue < _options.BuyThreshold 
-                    && diffPreviousMacd > (decimal)0.3)
+                    && diffPreviousMacd > (decimal)0.5
+                    && (_lastSellPrice == 0 || currentCandle.ClosePrice < _lastSellPrice * (decimal)0.99))
                 {
+                    //if (!_firstBuyFinished)
+                    //{
+                    //    if (_lastBuyPrice != 0 || currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.985)
+                    //    {
+                    //        _firstBuyFinished = true;
+                    //    }
+                    //    else
+                    //    {
+                    //        _stopTrading = true;
+                    //        _lastBuyPrice = currentCandle.ClosePrice;
+                    //        return await Task.FromResult(TrendDirection.None);
+                    //    }
+                    //}
+                   
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
                     _lastBuyPrice = currentCandle.ClosePrice;
@@ -90,17 +118,24 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = 0;
                 }
 
+                decimal stopPercentage = 1 - _stopCount * (decimal)0.03;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (_maxOrMinMacd > _options.SellThreshold 
                     && _lastMacd > macdValue
                     && diffPreviousMacd > (decimal)0.5
-                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.01
-                    /*|| currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.99*/)
+                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.02
+                    || currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
                 {
+                    //if (currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
+                    //{
+                    //    _stopCount++;
+                    //}
+
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;
                     _stopTrading = true;
                     _lastMacd = macdValue;
+                    _lastSellPrice = currentCandle.ClosePrice;
                 }
                 else
                 {

@@ -14,5 +14,6 @@ namespace CryptoTrading.Logic.Services.Interfaces
         int TradingCount { get; set; }
         bool HasOpenOrder { get; set; }
         long OpenOrderNumber { get; set; }
+        bool EnableRealtimeTrading { get; }
     }
 }

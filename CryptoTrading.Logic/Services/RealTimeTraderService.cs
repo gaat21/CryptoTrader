@@ -23,7 +23,7 @@ namespace CryptoTrading.Logic.Services
         private readonly IExchangeProvider _exchangeProvider;
         private readonly ICandleRepository _candleRepository;
         private readonly IEmailService _emailService;
-        private const int DelayInMilliseconds = 60000;
+        private int _delayInMilliseconds = 60000;
         private string _tradingPair;
 
         private bool _isSetFirstPrice;
@@ -71,6 +71,7 @@ namespace CryptoTrading.Logic.Services
         {
             _cancellationToken = cancellationToken;
             _tradingPair = tradingPair;
+            _delayInMilliseconds = (int) candlePeriod * _delayInMilliseconds;
             var lastSince = GetSinceUnixTime(candlePeriod);
             var lastScanId = _candleRepository.GetLatestScanId();
             CandleModel currentCandle = null;
@@ -111,7 +112,7 @@ namespace CryptoTrading.Logic.Services
                 }
 
                 // ReSharper disable once MethodSupportsCancellation
-                await Task.Delay((int)(DelayInMilliseconds - startWatcher.ElapsedMilliseconds));
+                await Task.Delay((int)(_delayInMilliseconds - startWatcher.ElapsedMilliseconds));
                 lastSince += (int) candlePeriod * _strategy.CandleSize * 60;
                 startWatcher.Stop();
             }
@@ -139,12 +140,15 @@ namespace CryptoTrading.Logic.Services
                     return;
                 }
 
-                var buyPrice = _exchangeProvider.GetTicker(_tradingPair).Result.LowestAsk;
+                var buyPrice = !_userBalanceService.EnableRealtimeTrading ? candle.ClosePrice : _exchangeProvider.GetTicker(_tradingPair).Result.LowestAsk;
                 _userBalanceService.SetBuyPrice(buyPrice);
-                _userBalanceService.OpenOrderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Buy, _tradingPair, buyPrice, _userBalanceService.Rate);
-                _userBalanceService.HasOpenOrder = true;
+                if (_userBalanceService.EnableRealtimeTrading)
+                {
+                    _userBalanceService.OpenOrderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Buy, _tradingPair, buyPrice, _userBalanceService.Rate);
+                    _userBalanceService.HasOpenOrder = true;
 
-                await CheckOrderInvoked(_userBalanceService.OpenOrderNumber, TradeType.Buy);
+                    await CheckOrderInvoked(_userBalanceService.OpenOrderNumber, TradeType.Buy);
+                }
 
                 var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${buyPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {_userBalanceService.OpenOrderNumber}\n";
                 Console.WriteLine(msg);
@@ -161,13 +165,16 @@ namespace CryptoTrading.Logic.Services
                     await _exchangeProvider.CancelOrderAsync(_userBalanceService.OpenOrderNumber);
                     return;
                 }
-
-                var sellPrice = _exchangeProvider.GetTicker(_tradingPair).Result.HighestBid;
+                var sellPrice = !_userBalanceService.EnableRealtimeTrading ? candle.ClosePrice : _exchangeProvider.GetTicker(_tradingPair).Result.HighestBid;
                 _userBalanceService.TradingCount++;
-                var orderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Sell, _tradingPair, sellPrice, _userBalanceService.Rate);
-                _userBalanceService.HasOpenOrder = true;
+                long orderNumber = 0;
+                if (_userBalanceService.EnableRealtimeTrading)
+                {
+                    orderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Sell, _tradingPair, sellPrice, _userBalanceService.Rate);
+                    _userBalanceService.HasOpenOrder = true;
 
-                await CheckOrderInvoked(orderNumber, TradeType.Sell);
+                    await CheckOrderInvoked(orderNumber, TradeType.Sell);
+                }
 
                 var profit = _userBalanceService.GetProfit(sellPrice);
                 var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${sellPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {orderNumber}\n" +

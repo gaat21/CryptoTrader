@@ -10,10 +10,12 @@ namespace CryptoTrading.Logic.Services
     {
         private decimal _profit;
         private readonly decimal _defaultAmount;
+        private static bool _enableRealtimeTrading;
 
         public UserBalanceService(IOptions<CryptoTradingOptions> cryptoTradingOptions)
         {
             _defaultAmount = cryptoTradingOptions.Value.AmountInUsdt;
+            _enableRealtimeTrading = cryptoTradingOptions.Value.EnableRealtimeTrading;
         }
 
         ProfitModel IUserBalanceService.GetProfit(decimal sellPrice)
@@ -67,5 +69,7 @@ namespace CryptoTrading.Logic.Services
         public bool HasOpenOrder { get; set; } = false;
 
         public long OpenOrderNumber { get; set; }
+
+        public bool EnableRealtimeTrading { get; } = _enableRealtimeTrading;
     }
 }
