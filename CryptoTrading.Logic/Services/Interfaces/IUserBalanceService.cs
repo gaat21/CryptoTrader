@@ -1,4 +1,6 @@
-﻿using CryptoTrading.Logic.Services.Models;
+﻿using System;
+using CryptoTrading.Logic.Models;
+using CryptoTrading.Logic.Services.Models;
 
 namespace CryptoTrading.Logic.Services.Interfaces
 {
@@ -6,11 +8,11 @@ namespace CryptoTrading.Logic.Services.Interfaces
     {
         decimal Rate { get; set; }
         void SetBuyPrice(decimal price);
-        ProfitModel GetProfit(decimal sellPrice);
+        ProfitModel GetProfit(decimal sellPrice, DateTime candleDateTime);
         ProfitModel GetProfit(decimal? profit);
         string TradingSummary();
-        decimal LastPrice { get; set; }
-        decimal FirstPrice { get; set; }
+        CandleModel LastPrice { get; set; }
+        CandleModel FirstPrice { get; set; }
         int TradingCount { get; set; }
         bool HasOpenOrder { get; set; }
         long OpenOrderNumber { get; set; }

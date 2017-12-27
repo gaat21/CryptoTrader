@@ -88,7 +88,7 @@ namespace CryptoTrading.Logic.Services
                     currentCandle = candlesList.Last();
                     if (!_isSetFirstPrice)
                     {
-                        _userBalanceService.FirstPrice = currentCandle.ClosePrice;
+                        _userBalanceService.FirstPrice = currentCandle;
                         _isSetFirstPrice = true;
                     }
                     var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
@@ -121,7 +121,7 @@ namespace CryptoTrading.Logic.Services
             {
                 if (currentCandle != null)
                 {
-                    _userBalanceService.LastPrice = currentCandle.ClosePrice;
+                    _userBalanceService.LastPrice = currentCandle;
                     if (_lastTrendDirection == TrendDirection.Long)
                     {
                         // ReSharper disable once MethodSupportsCancellation
@@ -176,7 +176,7 @@ namespace CryptoTrading.Logic.Services
                     await CheckOrderInvoked(orderNumber, TradeType.Sell);
                 }
 
-                var profit = _userBalanceService.GetProfit(sellPrice);
+                var profit = _userBalanceService.GetProfit(sellPrice, candle.StartDateTime);
                 var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${sellPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {orderNumber}\n" +
                           $"Profit: ${profit.Profit}\n" +
                           "\n" +

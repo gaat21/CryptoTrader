@@ -1,4 +1,5 @@
 ﻿using System;
+using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Services.Interfaces;
 using CryptoTrading.Logic.Services.Models;
@@ -10,26 +11,29 @@ namespace CryptoTrading.Logic.Services
     {
         private decimal _profit;
         private readonly decimal _defaultAmount;
-        private static bool _enableRealtimeTrading;
 
         public UserBalanceService(IOptions<CryptoTradingOptions> cryptoTradingOptions)
         {
             _defaultAmount = cryptoTradingOptions.Value.AmountInUsdt;
-            _enableRealtimeTrading = cryptoTradingOptions.Value.EnableRealtimeTrading;
+            EnableRealtimeTrading = cryptoTradingOptions.Value.EnableRealtimeTrading;
         }
 
-        ProfitModel IUserBalanceService.GetProfit(decimal sellPrice)
+        ProfitModel IUserBalanceService.GetProfit(decimal sellPrice, DateTime candleDateTime)
         {
             var sellProfit = sellPrice * Rate - _defaultAmount;
             _profit += sellProfit;
-            LastPrice = sellPrice;
+            LastPrice = new CandleModel
+            {
+                ClosePrice = sellPrice,
+                StartDateTime = candleDateTime
+            };
             return GetProfit(sellProfit);
         }
 
         public ProfitModel GetProfit(decimal? profit = null)
         {
-            var firstRate = Math.Round(_defaultAmount / FirstPrice, 8);
-            var normalProfit = Math.Round(LastPrice * firstRate - _defaultAmount, 8);
+            var firstRate = Math.Round(_defaultAmount / FirstPrice.ClosePrice, 8);
+            var normalProfit = Math.Round(LastPrice.ClosePrice * firstRate - _defaultAmount, 8);
             return new ProfitModel
             {
                 Profit = profit ?? 0,
@@ -44,6 +48,8 @@ namespace CryptoTrading.Logic.Services
         {
             var profit = GetProfit();
 
+            var totalDays = Math.Round((LastPrice.StartDateTime - FirstPrice.StartDateTime).TotalHours / 24, 4);
+            var totalProfitPercantagePerDay = Math.Round(profit.TotalProfit / (decimal)totalDays, 4);
             return $"Trading count: {TradingCount}\n" +
                    "\n" +
                    $"Total profit: ${profit.TotalProfit}\n" +
@@ -51,11 +57,13 @@ namespace CryptoTrading.Logic.Services
                    "\n" +
                    $"Total normal profit: ${ profit.TotalNormalProfit}\n" +
                    $"Total normal profit %: {decimal.Round(profit.TotalNormalProfitPercentage, 2)}%\n" +
-                   "\n";
+                   "\n" +
+                   $"Total day(s): {totalDays}\n" +
+                   $"Total profit % per day: {totalProfitPercantagePerDay}\n";
         }
 
-        public decimal FirstPrice { get; set; }
-        public decimal LastPrice { get; set; }
+        public CandleModel FirstPrice { get; set; }
+        public CandleModel LastPrice { get; set; }
 
         public int TradingCount { get; set; }
 
@@ -70,6 +78,6 @@ namespace CryptoTrading.Logic.Services
 
         public long OpenOrderNumber { get; set; }
 
-        public bool EnableRealtimeTrading { get; } = _enableRealtimeTrading;
+        public bool EnableRealtimeTrading { get; }
     }
 }

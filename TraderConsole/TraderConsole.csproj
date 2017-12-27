@@ -26,6 +26,12 @@
     <Folder Include="Configs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Configs\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="CopyLinkedContentFiles" BeforeTargets="Build">
     <Copy SourceFiles="%(Content.Identity)" DestinationFiles="%(Content.Link)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" Condition="'%(Content.Link)' != ''" />
   </Target>

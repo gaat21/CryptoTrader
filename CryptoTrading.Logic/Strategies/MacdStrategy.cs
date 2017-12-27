@@ -22,9 +22,8 @@ namespace CryptoTrading.Logic.Strategies
         private decimal? _lastMacd;
         private readonly MacdStrategyOptions _options;
         private bool _stopTrading;
-        private bool _firstBuyFinished = false;
         private int _candleCount = 1;
-        private int _stopCount = 1;
+        private int _lastTradeTimeCount = 1;
 
         public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -45,10 +44,9 @@ namespace CryptoTrading.Logic.Strategies
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
 
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
-                              $"MACD: {macdValue}; " +
-                              $"Signal: {signalEmaValue}; " +
-                              $"Histrogram: {macdValue - signalEmaValue}; " +
-                              $"PeekMACD: {_maxOrMinMacd}; " +
+                              $"CandleType: {currentCandle.CandleType};\t" +
+                              $"MACD: {macdValue};\t" +
+                              $"PeekMACD: {_maxOrMinMacd};\t" +
                               $"Close price: {currentCandle.ClosePrice}; ");
 
             if (!_lastMacd.HasValue)
@@ -64,6 +62,7 @@ namespace CryptoTrading.Logic.Strategies
                 return await Task.FromResult(TrendDirection.None);
             }
 
+            _lastTradeTimeCount++;
             if (_lastTrend == TrendDirection.Short)
             {
                 if (macdValue > 0 && _stopTrading)
@@ -76,33 +75,24 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = macdValue;
                 }
 
-                _lastMacd = macdValue;
-                var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
+                var diffPreviousMacd = _maxOrMinMacd - macdValue;
+                var calcPercentage = (200 - _lastTradeTimeCount) / 10000;
+                var buyPercentage = 1 - calcPercentage;
                 if (_stopTrading == false 
                     && macdValue < _options.BuyThreshold 
-                    && diffPreviousMacd > (decimal)0.5
-                    && (_lastSellPrice == 0 || currentCandle.ClosePrice < _lastSellPrice * (decimal)0.99))
+                    && diffPreviousMacd < -(decimal)1.0
+                    && macdValue > _lastMacd
+                    && (_lastSellPrice == 0 
+                    || currentCandle.ClosePrice < _lastSellPrice * buyPercentage))
                 {
-                    //if (!_firstBuyFinished)
-                    //{
-                    //    if (_lastBuyPrice != 0 || currentCandle.ClosePrice < _lastBuyPrice * (decimal)0.985)
-                    //    {
-                    //        _firstBuyFinished = true;
-                    //    }
-                    //    else
-                    //    {
-                    //        _stopTrading = true;
-                    //        _lastBuyPrice = currentCandle.ClosePrice;
-                    //        return await Task.FromResult(TrendDirection.None);
-                    //    }
-                    //}
-                   
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
                     _lastBuyPrice = currentCandle.ClosePrice;
+                    _lastMacd = macdValue;
                 }
                 else
                 {
+                    _lastMacd = macdValue;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }
@@ -118,24 +108,20 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = 0;
                 }
 
-                decimal stopPercentage = 1 - _stopCount * (decimal)0.03;
+                var stopPercentage = (decimal) 0.97;
+                var progitPercentage = (decimal) 1.02;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
-                if (_maxOrMinMacd > _options.SellThreshold 
-                    && _lastMacd > macdValue
+                if (_lastMacd > macdValue
                     && diffPreviousMacd > (decimal)0.5
-                    && currentCandle.ClosePrice > _lastBuyPrice * (decimal)1.02
+                    && currentCandle.ClosePrice > _lastBuyPrice * progitPercentage
                     || currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
                 {
-                    //if (currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
-                    //{
-                    //    _stopCount++;
-                    //}
-
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;
                     _stopTrading = true;
                     _lastMacd = macdValue;
                     _lastSellPrice = currentCandle.ClosePrice;
+                    _lastTradeTimeCount = 1;
                 }
                 else
                 {

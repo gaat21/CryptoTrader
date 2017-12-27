@@ -30,7 +30,7 @@ namespace CryptoTrading.Logic.Services
                 return;
             }
 
-            _userBalanceService.FirstPrice = candles.First().ClosePrice;
+            _userBalanceService.FirstPrice = candles.First();
             for (int i = 0; i < candles.Count; i++)
             {
                 var startIndex = i - _strategy.CandleSize;
@@ -56,7 +56,7 @@ namespace CryptoTrading.Logic.Services
                 await SellAsync(currentCandle);
             }
 
-            _userBalanceService.LastPrice = candles.Last().ClosePrice;
+            _userBalanceService.LastPrice = candles.Last();
         }
 
         public Task StartTradingAsync(string tradingPair, CandlePeriod candlePeriod, CancellationToken cancellationToken)
@@ -68,7 +68,7 @@ namespace CryptoTrading.Logic.Services
         {
             _hasOpenPosition = false;
             _userBalanceService.TradingCount++;
-            var profit = _userBalanceService.GetProfit(candle.ClosePrice);
+            var profit = _userBalanceService.GetProfit(candle.ClosePrice, candle.StartDateTime);
             var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n" +
                       $"Profit: ${profit.Profit}\n";
 

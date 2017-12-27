@@ -12,5 +12,6 @@ namespace CryptoTrading.Logic.Models
         public decimal Volume { get; set; }
         public decimal VolumeWeightedPrice { get; set; }
         public int TradingCount { get; set; }
+        public CandleType CandleType => ClosePrice >= OpenPrice ? CandleType.Green : CandleType.Red;
     }
 }
