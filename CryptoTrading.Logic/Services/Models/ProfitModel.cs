@@ -4,6 +4,8 @@
     {
         public decimal Profit { get; set; }
 
+        public int TradingTimeInMinutes { get; set; }
+
         public decimal TotalProfit { get; set; }
 
         public decimal TotalProfitPercentage { get; set; }

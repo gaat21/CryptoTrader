@@ -141,7 +141,11 @@ namespace CryptoTrading.Logic.Services
                 }
 
                 var buyPrice = !_userBalanceService.EnableRealtimeTrading ? candle.ClosePrice : _exchangeProvider.GetTicker(_tradingPair).Result.LowestAsk;
-                _userBalanceService.SetBuyPrice(buyPrice);
+                _userBalanceService.SetBuyPrice(new CandleModel
+                {
+                    ClosePrice = buyPrice,
+                    StartDateTime = DateTime.UtcNow
+                });
                 if (_userBalanceService.EnableRealtimeTrading)
                 {
                     _userBalanceService.OpenOrderNumber = await _exchangeProvider.CreateOrderAsync(TradeType.Buy, _tradingPair, buyPrice, _userBalanceService.Rate);
@@ -179,6 +183,7 @@ namespace CryptoTrading.Logic.Services
                 var profit = _userBalanceService.GetProfit(sellPrice, candle.StartDateTime);
                 var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${sellPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {orderNumber}\n" +
                           $"Profit: ${profit.Profit}\n" +
+                          $"Trading time in hours: {Math.Round(profit.TradingTimeInMinutes / 60.0, 2)}\n" +
                           "\n" +
                           _userBalanceService.TradingSummary();
 

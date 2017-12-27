@@ -11,11 +11,14 @@ namespace CryptoTrading.Logic.Services
     {
         private decimal _profit;
         private readonly decimal _defaultAmount;
+        private decimal _tradingFee;
+        private DateTime _buyStartDateTime;
 
         public UserBalanceService(IOptions<CryptoTradingOptions> cryptoTradingOptions)
         {
             _defaultAmount = cryptoTradingOptions.Value.AmountInUsdt;
             EnableRealtimeTrading = cryptoTradingOptions.Value.EnableRealtimeTrading;
+            _tradingFee = cryptoTradingOptions.Value.TradingFee;
         }
 
         ProfitModel IUserBalanceService.GetProfit(decimal sellPrice, DateTime candleDateTime)
@@ -37,6 +40,7 @@ namespace CryptoTrading.Logic.Services
             return new ProfitModel
             {
                 Profit = profit ?? 0,
+                TradingTimeInMinutes = (int)Math.Round((LastPrice.StartDateTime - _buyStartDateTime).TotalMinutes),
                 TotalProfit = _profit,
                 TotalProfitPercentage = Math.Round(_profit / _defaultAmount * 100, 8),
                 TotalNormalProfit = normalProfit,
@@ -54,6 +58,8 @@ namespace CryptoTrading.Logic.Services
                    "\n" +
                    $"Total profit: ${profit.TotalProfit}\n" +
                    $"Total profit %: {decimal.Round(profit.TotalProfitPercentage, 2)}%\n" +
+                   $"Total fee %: {TradingCount * _tradingFee}%\n" +
+                   $"Total net profit %: {decimal.Round(profit.TotalProfitPercentage, 2) - TradingCount * _tradingFee}%\n" +
                    "\n" +
                    $"Total normal profit: ${ profit.TotalNormalProfit}\n" +
                    $"Total normal profit %: {decimal.Round(profit.TotalNormalProfitPercentage, 2)}%\n" +
@@ -69,9 +75,10 @@ namespace CryptoTrading.Logic.Services
 
         public decimal Rate { get; set; }
 
-        public void SetBuyPrice(decimal buyPrice)
+        public void SetBuyPrice(CandleModel buyCandle)
         {
-            Rate = Math.Round(_defaultAmount / buyPrice, 8);
+            _buyStartDateTime = buyCandle.StartDateTime;
+            Rate = Math.Round(_defaultAmount / buyCandle.ClosePrice, 8);
         }
 
         public bool HasOpenOrder { get; set; } = false;

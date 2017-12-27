@@ -70,7 +70,8 @@ namespace CryptoTrading.Logic.Services
             _userBalanceService.TradingCount++;
             var profit = _userBalanceService.GetProfit(candle.ClosePrice, candle.StartDateTime);
             var msg = $"Sell crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n" +
-                      $"Profit: ${profit.Profit}\n";
+                      $"Profit: ${profit.Profit}\n" +
+                      $"Trading time in hours: {Math.Round(profit.TradingTimeInMinutes / 60.0, 2)}\n";
 
             Console.WriteLine(msg);
 
@@ -80,7 +81,7 @@ namespace CryptoTrading.Logic.Services
         public Task BuyAsync(CandleModel candle)
         {
             _hasOpenPosition = true;
-            _userBalanceService.SetBuyPrice(candle.ClosePrice);
+            _userBalanceService.SetBuyPrice(candle);
             Console.WriteLine($"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${candle.ClosePrice}; Rate: {_userBalanceService.Rate}\n");
 
             return Task.FromResult(0);

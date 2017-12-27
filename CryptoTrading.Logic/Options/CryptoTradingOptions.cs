@@ -5,5 +5,7 @@
         public decimal AmountInUsdt { get; set; }
 
         public bool EnableRealtimeTrading { get; set; }
+
+        public decimal TradingFee { get; set; }
     }
 }

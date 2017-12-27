@@ -7,7 +7,7 @@ namespace CryptoTrading.Logic.Services.Interfaces
     public interface IUserBalanceService
     {
         decimal Rate { get; set; }
-        void SetBuyPrice(decimal price);
+        void SetBuyPrice(CandleModel buyCandle);
         ProfitModel GetProfit(decimal sellPrice, DateTime candleDateTime);
         ProfitModel GetProfit(decimal? profit);
         string TradingSummary();
