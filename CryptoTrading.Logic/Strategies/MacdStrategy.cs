@@ -24,6 +24,8 @@ namespace CryptoTrading.Logic.Strategies
         private bool _stopTrading;
         private int _candleCount = 1;
         private int _lastTradeTimeCount = 1;
+        private int _delayPercentage = 90;
+        private decimal _lastClosePrice;
 
         public MacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -44,14 +46,15 @@ namespace CryptoTrading.Logic.Strategies
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
 
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
-                              $"CandleType: {currentCandle.CandleType};\t" +
                               $"MACD: {macdValue};\t" +
                               $"PeekMACD: {_maxOrMinMacd};\t" +
-                              $"Close price: {currentCandle.ClosePrice}; ");
+                              $"LastTradeCount: {_lastTradeTimeCount};\t" +
+                              $"Close price: {currentCandle.ClosePrice};");
 
             if (!_lastMacd.HasValue)
             {
                 _lastMacd = macdValue;
+                _lastClosePrice = currentCandle.ClosePrice;
                 return await Task.FromResult(TrendDirection.None);
             }
 
@@ -76,12 +79,17 @@ namespace CryptoTrading.Logic.Strategies
                 }
 
                 var diffPreviousMacd = _maxOrMinMacd - macdValue;
-                var calcPercentage = (200 - _lastTradeTimeCount) / 10000;
+                var calcPercentage = (_delayPercentage - _lastTradeTimeCount) / 10000;
+                if (_lastTradeTimeCount >= _delayPercentage)
+                {
+                    _lastSellPrice = 0;
+                }
                 var buyPercentage = 1 - calcPercentage;
                 if (_stopTrading == false 
                     && macdValue < _options.BuyThreshold 
                     && diffPreviousMacd < -(decimal)1.0
                     && macdValue > _lastMacd
+                    && currentCandle.ClosePrice > _lastClosePrice
                     && (_lastSellPrice == 0 
                     || currentCandle.ClosePrice < _lastSellPrice * buyPercentage))
                 {
@@ -89,10 +97,12 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = 0;
                     _lastBuyPrice = currentCandle.ClosePrice;
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                 }
                 else
                 {
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }
@@ -109,12 +119,12 @@ namespace CryptoTrading.Logic.Strategies
                 }
 
                 var stopPercentage = (decimal) 0.97;
-                var progitPercentage = (decimal) 1.02;
+                var profitPercentage = (decimal) 1.038;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (_lastMacd > macdValue
-                    && diffPreviousMacd > (decimal)0.5
-                    && currentCandle.ClosePrice > _lastBuyPrice * progitPercentage
-                    || currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
+                    && diffPreviousMacd > (decimal)1.0
+                    && (currentCandle.ClosePrice > _lastBuyPrice * profitPercentage
+                    || currentCandle.ClosePrice < _lastBuyPrice * stopPercentage))
                 {
                     _lastTrend = TrendDirection.Short;
                     _maxOrMinMacd = 0;
@@ -122,10 +132,12 @@ namespace CryptoTrading.Logic.Strategies
                     _lastMacd = macdValue;
                     _lastSellPrice = currentCandle.ClosePrice;
                     _lastTradeTimeCount = 1;
+                    _lastClosePrice = currentCandle.ClosePrice;
                 }
                 else
                 {
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }

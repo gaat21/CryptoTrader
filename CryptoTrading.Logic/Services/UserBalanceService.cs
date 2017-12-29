@@ -36,12 +36,12 @@ namespace CryptoTrading.Logic.Services
         public ProfitModel GetProfit(decimal? profit = null)
         {
             var firstRate = Math.Round(_defaultAmount / FirstPrice.ClosePrice, 8);
-            var normalProfit = Math.Round(LastPrice.ClosePrice * firstRate - _defaultAmount, 8);
+            var normalProfit = Math.Round(LastPrice.ClosePrice * firstRate - _defaultAmount, 4);
             return new ProfitModel
             {
                 Profit = profit ?? 0,
                 TradingTimeInMinutes = (int)Math.Round((LastPrice.StartDateTime - _buyStartDateTime).TotalMinutes),
-                TotalProfit = _profit,
+                TotalProfit = Math.Round(_profit, 4),
                 TotalProfitPercentage = Math.Round(_profit / _defaultAmount * 100, 8),
                 TotalNormalProfit = normalProfit,
                 TotalNormalProfitPercentage = Math.Round(normalProfit / _defaultAmount * 100, 8)
@@ -53,19 +53,20 @@ namespace CryptoTrading.Logic.Services
             var profit = GetProfit();
 
             var totalDays = Math.Round((LastPrice.StartDateTime - FirstPrice.StartDateTime).TotalHours / 24, 4);
-            var totalProfitPercantagePerDay = Math.Round(profit.TotalProfit / (decimal)totalDays, 4);
+            var netProfitPercentage = decimal.Round(profit.TotalProfitPercentage, 2) - TradingCount * _tradingFee;
+            var totalProfitPercantagePerDay = Math.Round(netProfitPercentage / (decimal)totalDays, 4);
             return $"Trading count: {TradingCount}\n" +
                    "\n" +
                    $"Total profit: ${profit.TotalProfit}\n" +
                    $"Total profit %: {decimal.Round(profit.TotalProfitPercentage, 2)}%\n" +
                    $"Total fee %: {TradingCount * _tradingFee}%\n" +
-                   $"Total net profit %: {decimal.Round(profit.TotalProfitPercentage, 2) - TradingCount * _tradingFee}%\n" +
-                   "\n" +
-                   $"Total normal profit: ${ profit.TotalNormalProfit}\n" +
-                   $"Total normal profit %: {decimal.Round(profit.TotalNormalProfitPercentage, 2)}%\n" +
+                   $"Total net profit %: {netProfitPercentage}%\n" +
                    "\n" +
                    $"Total day(s): {totalDays}\n" +
-                   $"Total profit % per day: {totalProfitPercantagePerDay}\n";
+                   $"Total net profit % per day: {totalProfitPercantagePerDay}%\n" +
+                   "\n" +
+                   $"Total normal profit: ${profit.TotalNormalProfit}\n" +
+                   $"Total normal profit %: {decimal.Round(profit.TotalNormalProfitPercentage, 2)}%\n";
         }
 
         public CandleModel FirstPrice { get; set; }
