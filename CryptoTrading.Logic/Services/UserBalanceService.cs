@@ -11,7 +11,7 @@ namespace CryptoTrading.Logic.Services
     {
         private decimal _profit;
         private readonly decimal _defaultAmount;
-        private decimal _tradingFee;
+        private readonly decimal _tradingFee;
         private DateTime _buyStartDateTime;
 
         public UserBalanceService(IOptions<CryptoTradingOptions> cryptoTradingOptions)
