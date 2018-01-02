@@ -122,14 +122,14 @@ namespace CryptoTrading.Logic.Strategies
                     && macdValue > _lastMacd
                     && currentCandle.ClosePrice > _lastClosePrice)
                 {
-                    _macdRate = (1 - Math.Round(_minMacdClosePrice / _maxMacdClosePrice, 2)) * 100;
+                    _macdRate = (1 - Math.Round(_minMacdClosePrice / _maxMacdClosePrice, 4)) * 100;
                     Console.WriteLine($"MaxMacd: {_maxMacdClosePrice}; MinMacd: {_minMacdClosePrice}; Rate: {_macdRate}%");
 
                     _lastMacd = macdValue;
                     _lastClosePrice = currentCandle.ClosePrice;
-                    if (_macdRate <= (decimal)3.0 || _macdRate > (decimal)5.5)
+                    if (_macdRate < (decimal)2.75 || _macdRate > (decimal)5.5)
                     {
-                        //_stopTrading = true;
+                        _stopTrading = true;
                         return await Task.FromResult(TrendDirection.None);
                     }
 
@@ -156,7 +156,7 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = 0;
                 }
 
-                var stopPercentage = 1 - (_macdRate - (decimal) 0.4) / 100;
+                var stopPercentage = 1 - (_macdRate - (decimal)0.4) / 100;
                 var profitPercentage = 1 + (_macdRate + (decimal)0.4) / 100; //(decimal) 1.038;
                 var diffPreviousMacd = _maxOrMinMacd - macdValue;
                 if (_lastMacd > macdValue
