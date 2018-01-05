@@ -7,6 +7,8 @@
         Mfi,
         Macd,
         LtcMacd,
+        EthMacd,
+        AltMacd,
         CandleSticks,
         Custom
     }

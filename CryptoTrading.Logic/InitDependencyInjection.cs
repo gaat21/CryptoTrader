@@ -94,6 +94,12 @@ namespace CryptoTrading.Logic
                 case Strategy.LtcMacd:
                     serviceCollection.AddTransient<IStrategy, LtcMacdStrategy>();
                     break;
+                case Strategy.EthMacd:
+                    serviceCollection.AddTransient<IStrategy, EthMacdStrategy>();
+                    break;
+                case Strategy.AltMacd:
+                    serviceCollection.AddTransient<IStrategy, AltMacdStrategy>();
+                    break;
                 case Strategy.Mfi:
                     serviceCollection.AddTransient<IStrategy, MfiStrategy>();
                     break;
