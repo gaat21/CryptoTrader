@@ -78,6 +78,7 @@ namespace CryptoTrading.Logic
             serviceCollection.AddTransient<IIndicator, EmaIndicator>();
             serviceCollection.AddTransient<IIndicator, TsiIndicator>();
             serviceCollection.AddTransient<IIndicator, RsiIndicator>();
+            serviceCollection.AddTransient<IIndicator, TdiIndicator>();
             serviceCollection.AddTransient<IIndicator, CandleSticksIndicator>();
 
             switch (strategy)
@@ -96,9 +97,6 @@ namespace CryptoTrading.Logic
                     break;
                 case Strategy.EthMacd:
                     serviceCollection.AddTransient<IStrategy, EthMacdStrategy>();
-                    break;
-                case Strategy.AltMacd:
-                    serviceCollection.AddTransient<IStrategy, AltMacdStrategy>();
                     break;
                 case Strategy.Mfi:
                     serviceCollection.AddTransient<IStrategy, MfiStrategy>();

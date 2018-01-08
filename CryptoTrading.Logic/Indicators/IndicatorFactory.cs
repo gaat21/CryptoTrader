@@ -18,5 +18,10 @@ namespace CryptoTrading.Logic.Indicators
         {
             return new MfiIndicator(weight);
         }
+
+        public IIndicator GetTdiIndicator(int period)
+        {
+            return new TdiIndicator(period);
+        }
     }
 }

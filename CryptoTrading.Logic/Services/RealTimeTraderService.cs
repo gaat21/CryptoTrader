@@ -156,7 +156,7 @@ namespace CryptoTrading.Logic.Services
 
                 var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${buyPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {_userBalanceService.OpenOrderNumber}\n";
                 Console.WriteLine(msg);
-                _emailService.SendEmail($"Buying {_tradingPair}", msg);
+                _emailService.SendEmail($"Trading with {_tradingPair}", msg);
             }
         }
 
@@ -189,7 +189,7 @@ namespace CryptoTrading.Logic.Services
 
                 Console.WriteLine(msg);
 
-                _emailService.SendEmail($"Selling {_tradingPair}", msg);
+                _emailService.SendEmail($"Trading with {_tradingPair}", msg);
             }
         }
 

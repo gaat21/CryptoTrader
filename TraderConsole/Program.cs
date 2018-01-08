@@ -68,6 +68,8 @@ namespace TraderConsole
             }
             catch (Exception ex)
             {
+                var emailService = serviceProvider.GetService<IEmailService>();
+                emailService.SendEmail($"Exception {options.TradingPair}", ex.ToString());
                 Console.WriteLine($"Exception: {ex}");
             }
 

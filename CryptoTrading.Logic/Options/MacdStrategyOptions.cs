@@ -2,6 +2,10 @@
 {
     public class MacdStrategyOptions
     {
+        public int VeryLongWeight { get; set; }
+
+        public int TdiPeriod { get; set; }
+
         public int LongWeight { get; set; }
 
         public int ShortWeight { get; set; }
