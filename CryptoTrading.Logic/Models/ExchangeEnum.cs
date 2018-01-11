@@ -4,6 +4,7 @@
     {
         Kraken,
         Poloniex,
-        Bitfinex
+        Bitfinex,
+        Binance
     }
 }

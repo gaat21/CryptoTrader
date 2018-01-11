@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace CryptoTrading.Logic.Utils
 {
     public class FixedSizedQueue<T>
+        where T : struct 
     {
         private readonly Queue<T> _queue;
         private readonly int _size;
@@ -38,6 +40,21 @@ namespace CryptoTrading.Logic.Utils
                 }
                 return _queue.ToArray()[i];
             }
+        }
+
+        public List<T> GetItems()
+        {
+            return _queue.ToList();
+        }
+
+        public T MinPrice()
+        {
+            return _queue.ToList().Min();
+        }
+
+        public T MaxPrice()
+        {
+            return _queue.ToList().Max();
         }
     }
 }

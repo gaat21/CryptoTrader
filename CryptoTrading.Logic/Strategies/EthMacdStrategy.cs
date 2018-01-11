@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Strategies.Interfaces;
+using CryptoTrading.Logic.Utils;
 using Microsoft.Extensions.Options;
 
 namespace CryptoTrading.Logic.Strategies
@@ -14,7 +16,7 @@ namespace CryptoTrading.Logic.Strategies
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
         private readonly IIndicator _signalEmaIndicator;
-        private IIndicator _tdiIndicator;
+        private readonly IIndicator _tdiIndicator;
 
         private TrendDirection _lastTrend = TrendDirection.Short;
         private decimal _lastBuyPrice;
@@ -30,6 +32,7 @@ namespace CryptoTrading.Logic.Strategies
         private bool _macdSwitch;
         private int _candleCount = 1;
         private decimal _lastClosePrice;
+        private readonly FixedSizedQueue<decimal> _fixedSizedQueue;
 
         public EthMacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -39,6 +42,7 @@ namespace CryptoTrading.Logic.Strategies
             _signalEmaIndicator = indicatorFactory.GetEmaIndicator(_options.Signal);
 
             _tdiIndicator = indicatorFactory.GetTdiIndicator(_options.TdiPeriod);
+            _fixedSizedQueue = new FixedSizedQueue<decimal>(50);
         }
 
         public int CandleSize => 1;
@@ -52,10 +56,13 @@ namespace CryptoTrading.Logic.Strategies
             var signalEmaValue = Math.Round(_signalEmaIndicator.GetIndicatorValue(emaDiffValue).IndicatorValue, 4);
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
 
+            _fixedSizedQueue.Enqueue(currentCandle.ClosePrice);
+
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
                               $"MACD: {macdValue};\t" +
                               $"TDI: {tdiValue};\t" +
                               $"PeekMACD: {_maxOrMinMacd};\t" +
+                              $"Queue({_fixedSizedQueue.QueueSize}) avg price: {_fixedSizedQueue.GetItems().Average()};\t" +
                               $"Close price: {currentCandle.ClosePrice};");
 
             if (!_lastMacd.HasValue)
@@ -118,10 +125,7 @@ namespace CryptoTrading.Logic.Strategies
                 if (macdValue < 0 && macdValue < _lastMacd)
                 {
                     _maxOrMinMacd = macdValue;
-                }
-
-                //_macdRate = (1 - Math.Round(_minMacdClosePrice / _maxMacdClosePrice, 4)) * 100;
-                //Console.WriteLine($"MaxMacd: {_maxMacdClosePrice}; MinMacd: {_minMacdClosePrice}; Rate: {_macdRate}%");
+                } 
 
                 var diffPreviousMacd = _maxOrMinMacd - macdValue;
                 if (_stopTrading == false
@@ -133,11 +137,14 @@ namespace CryptoTrading.Logic.Strategies
                 {
                     _lastMacd = macdValue;
                     _lastClosePrice = currentCandle.ClosePrice;
-                    //if (_macdRate < (decimal)2.0 || _macdRate > (decimal)5.5)
-                    //{
-                    //    //_stopTrading = true;
-                    //    return await Task.FromResult(TrendDirection.None);
-                    //}
+
+                    _macdRate = (1 - Math.Round(_minMacdClosePrice / _maxMacdClosePrice, 4)) * 100;
+                    Console.WriteLine($"MaxMacd: {_maxMacdClosePrice}; MinMacd: {_minMacdClosePrice}; Rate: {_macdRate}%");
+                    if (_macdRate < (decimal)1.0 || _macdRate > (decimal)6.0)
+                    {
+                        _stopTrading = true;
+                        return await Task.FromResult(TrendDirection.None);
+                    }
 
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
@@ -162,8 +169,8 @@ namespace CryptoTrading.Logic.Strategies
                     _maxOrMinMacd = 0;
                 }
 
-                var stopPercentage = (decimal) 0.97; //1 - (_macdRate - (decimal)0.4) / 100;
-                var profitPercentage = (decimal) 1.038; //1 + (_macdRate + (decimal)0.4) / 100;
+                var stopPercentage = 1 - (_macdRate - (decimal)0.4) / 100; //(decimal) 0.97;
+                var profitPercentage = 1 + (_macdRate + (decimal)0.4) / 100; //(decimal) 1.038;
                 var diffPreviousMacd = _maxOrMinMacd - macdValue;
                 if (_lastMacd > macdValue
                     && diffPreviousMacd > (decimal)1.0

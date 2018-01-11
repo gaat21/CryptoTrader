@@ -46,6 +46,10 @@ namespace CryptoTrading.Logic
                     serviceCollection.Configure<BitfinexOptions>(configuration.GetSection("Bitfinex"));
                     serviceCollection.AddTransient<IExchangeProvider, BitfinexExchangeProvider>();
                     break;
+                case ExchangeEnum.Binance:
+                    serviceCollection.Configure<BinanceOptions>(configuration.GetSection("Binance"));
+                    serviceCollection.AddTransient<IExchangeProvider, BinanceExchangeProvider>();
+                    break;
             }
 
             serviceCollection.Configure<EmaStrategyOptions>(configuration.GetSection("EmaStrategy"));
