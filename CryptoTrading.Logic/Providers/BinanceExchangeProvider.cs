@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
@@ -14,8 +17,12 @@ namespace CryptoTrading.Logic.Providers
 {
     public class BinanceExchangeProvider : HttpBaseProvider, IExchangeProvider
     {
+        private readonly BinanceOptions _binanceOptions;
+        private const int RecvWindow = 10000; // 10 seconds to receive the reqest to exchange server
+
         public BinanceExchangeProvider(IOptions<BinanceOptions> binanceOptions) : base(binanceOptions.Value.ApiUrl)
         {
+            _binanceOptions = binanceOptions.Value;
         }
 
         public async Task<IEnumerable<CandleModel>> GetCandlesAsync(string tradingPair, CandlePeriod candlePeriod, long start, long? end)
@@ -58,34 +65,166 @@ namespace CryptoTrading.Logic.Providers
             }
         }
 
-        public Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount)
+        public async Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount)
         {
-            throw new NotImplementedException();
+            var createdTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var formParameters = $"symbol={tradingPair}" +
+                                 $"&side={tradeType.ToString().ToUpper()}" +
+                                 "&type=limit&timeInForce=GTC" +
+                                 $"&quantity={rate.ToString(CultureInfo.InvariantCulture)}" +
+                                 $"&price={amount.ToString(CultureInfo.InvariantCulture)}" +
+                                 $"&recvWindow={RecvWindow}" +
+                                 $"&timestamp={createdTs}";
+
+            using (var client = GetClient())
+            {
+                client.DefaultRequestHeaders.Add("X-MBX-APIKEY", _binanceOptions.ApiKey);
+                var signature = SignPostBody(formParameters);
+
+                var requestBody = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("symbol", tradingPair),
+                    new KeyValuePair<string, string>("side", tradeType.ToString().ToLower()),
+                    new KeyValuePair<string, string>("type", "limit"),
+                    new KeyValuePair<string, string>("timeInForce", "GTC"),
+                    new KeyValuePair<string, string>("quantity", rate.ToString(CultureInfo.InvariantCulture)),
+                    new KeyValuePair<string, string>("price", amount.ToString(CultureInfo.InvariantCulture)),
+                    new KeyValuePair<string, string>("recvWindow", RecvWindow.ToString()),
+                    new KeyValuePair<string, string>("timestamp", createdTs.ToString()),
+                    new KeyValuePair<string, string>("signature", signature)
+                });
+
+                using (var response = await client.PostAsync("/api/v3/order/test", requestBody))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}");
+                    }
+
+                    var responseDefinition = new { OrderId = long.MaxValue };
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    if (responseContent.ToLower().Contains("error"))
+                    {
+                        Console.WriteLine($"Create order error: Error: {responseContent}");
+                        return -1;
+                    }
+                    var deserializedResponse = JsonConvert.DeserializeAnonymousType(responseContent, responseDefinition);
+                    return deserializedResponse.OrderId;
+                }
+            }
         }
 
-        public Task<bool> CancelOrderAsync(long orderNumber)
+        public async Task<bool> CancelOrderAsync(string tradingPair, long orderNumber)
         {
-            throw new NotImplementedException();
+            var createdTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var formParameters = $"symbol={tradingPair}" +
+                                 $"&orderId={orderNumber}" +
+                                 $"&recvWindow={RecvWindow}" +
+                                 $"&timestamp={createdTs}";
+
+            using (var client = GetClient())
+            {
+                client.DefaultRequestHeaders.Add("X-MBX-APIKEY", _binanceOptions.ApiKey);
+                var signature = SignPostBody(formParameters);
+
+                using (var response = await client.DeleteAsync($"/api/v3/order?{formParameters}&signature={signature}"))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}");
+                    }
+
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    if (responseContent.ToLower().Contains("error"))
+                    {
+                        Console.WriteLine($"Create order error: Error: {responseContent}");
+                        return false;
+                    }
+                    return true;
+                }
+            }
         }
 
-        public Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber)
+        public async Task<IEnumerable<OrderDetail>> GetOrderAsync(string tradingPair, long orderNumber)
         {
-            throw new NotImplementedException();
+            var createdTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var formParameters = $"symbol={tradingPair}" +
+                                 $"&orderId={orderNumber}" +
+                                 $"&recvWindow={RecvWindow}" +
+                                 $"&timestamp={createdTs}";
+
+            using (var client = GetClient())
+            {
+                client.DefaultRequestHeaders.Add("X-MBX-APIKEY", _binanceOptions.ApiKey);
+                var signature = SignPostBody(formParameters);
+
+                using (var response = await client.GetAsync($"/api/v3/order?{formParameters}&signature={signature}"))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}");
+                    }
+
+                    var responseDefinition = new { OrderId = long.MaxValue, Status = BinanceStatus.New };
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    if (responseContent.ToLower().Contains("error"))
+                    {
+                        Console.WriteLine($"Create order error: Error: {responseContent}");
+                        return null;
+                    }
+                    var deserializedResponse = JsonConvert.DeserializeAnonymousType(responseContent, responseDefinition);
+                    return deserializedResponse.Status == BinanceStatus.Filled
+                        ? new List<OrderDetail>
+                        {
+                            new OrderDetail
+                            {
+                                CurrencyPair = tradingPair
+                            }
+                        }
+                        : null;
+                }
+            }
         }
 
-        public Task<string> GetBalanceAsync()
+        public async Task<Ticker> GetTicker(string tradingPair)
         {
-            throw new NotImplementedException();
+            using (var client = GetClient())
+            {
+                using (var response = await client.GetAsync($"/api/v3/ticker/bookTicker?symbol={tradingPair}"))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}");
+                    }
+
+                    var responseDefinition = new { Symbol = "", BidPrice = (decimal)0.0, AskPrice = (decimal)0.0 };
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var deserializedResponse = JsonConvert.DeserializeAnonymousType(responseContent, responseDefinition);
+                    return new Ticker
+                    {
+                        HighestBid = deserializedResponse.BidPrice,
+                        LowestAsk = deserializedResponse.AskPrice
+                    };
+                }
+            }
         }
 
-        public Task<OrderBook> GetOrderBook(string tradingPair, int depth)
+        private string SignPostBody(string formParameters)
         {
-            throw new NotImplementedException();
+            var hmacHash = new HMACSHA512(Encoding.UTF8.GetBytes(_binanceOptions.ApiSecret));
+            var signedParametersByteArray = hmacHash.ComputeHash(Encoding.UTF8.GetBytes(formParameters));
+            return BitConverter.ToString(signedParametersByteArray).Replace("-", "");
         }
+    }
 
-        public Task<Ticker> GetTicker(string tradingPair)
-        {
-            throw new NotImplementedException();
-        }
+    public enum BinanceStatus
+    {
+        New,
+        PartiallyFilled,
+        Filled,
+        Canceled,
+        PendingCancel,
+        Rejected,
+        Expired
     }
 }

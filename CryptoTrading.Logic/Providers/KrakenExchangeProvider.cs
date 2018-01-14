@@ -85,12 +85,12 @@ namespace CryptoTrading.Logic.Providers
             throw new NotImplementedException();
         }
 
-        public Task<bool> CancelOrderAsync(long orderNumber)
+        public Task<bool> CancelOrderAsync(string tradingPair, long orderNumber)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber)
+        public Task<IEnumerable<OrderDetail>> GetOrderAsync(string tradingPair, long orderNumber)
         {
             throw new NotImplementedException();
         }

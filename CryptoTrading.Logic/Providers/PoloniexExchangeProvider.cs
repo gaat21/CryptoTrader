@@ -49,7 +49,7 @@ namespace CryptoTrading.Logic.Providers
             }
         }
        
-        public async Task<bool> CancelOrderAsync(long orderNumber)
+        public async Task<bool> CancelOrderAsync(string tradingPair, long orderNumber)
         {
             var nonce = GenerateNonce();
             var formParameters = $"command=cancelOrder&nonce={nonce}&orderNumber={orderNumber}";
@@ -81,7 +81,7 @@ namespace CryptoTrading.Logic.Providers
             }
         }
 
-        public async Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber)
+        public async Task<IEnumerable<OrderDetail>> GetOrderAsync(string tradingPair, long orderNumber)
         {
             var nonce = GenerateNonce();
             var formParameters = $"command=returnOrderTrades&nonce={nonce}&orderNumber={orderNumber}";

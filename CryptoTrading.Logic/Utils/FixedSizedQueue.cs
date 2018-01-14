@@ -48,7 +48,7 @@ namespace CryptoTrading.Logic.Utils
 
         public List<T> GetItems()
         {
-            return _queue.ToList();
+            return _queue.Count == 0 ? new List<T> { default(T) } : _queue.ToList();
         }
 
         public T MinPrice()

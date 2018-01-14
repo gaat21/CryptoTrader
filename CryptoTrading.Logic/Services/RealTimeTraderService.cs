@@ -166,7 +166,7 @@ namespace CryptoTrading.Logic.Services
             {
                 if (_userBalanceService.HasOpenOrder)
                 {
-                    await _exchangeProvider.CancelOrderAsync(_userBalanceService.OpenOrderNumber);
+                    await _exchangeProvider.CancelOrderAsync(_tradingPair, _userBalanceService.OpenOrderNumber);
                     return;
                 }
                 var sellPrice = !_userBalanceService.EnableRealtimeTrading ? candle.ClosePrice : _exchangeProvider.GetTicker(_tradingPair).Result.HighestBid;
@@ -206,7 +206,7 @@ namespace CryptoTrading.Logic.Services
 
                     Thread.Sleep(20000); // sleep 20 seconds
 
-                    var orderDetails = await _exchangeProvider.GetOrderAsync(orderNumber);
+                    var orderDetails = await _exchangeProvider.GetOrderAsync(_tradingPair,orderNumber);
                     if (orderDetails != null)
                     {
                         var orderDetail = orderDetails.First();

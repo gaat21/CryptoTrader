@@ -11,13 +11,9 @@ namespace CryptoTrading.Logic.Providers.Interfaces
 
         Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount);
 
-        Task<bool> CancelOrderAsync(long orderNumber);
+        Task<bool> CancelOrderAsync(string tradingPair, long orderNumber);
 
-        Task<IEnumerable<OrderDetail>> GetOrderAsync(long orderNumber);
-
-        Task<string> GetBalanceAsync();
-
-        Task<OrderBook> GetOrderBook(string tradingPair, int depth);
+        Task<IEnumerable<OrderDetail>> GetOrderAsync(string tradingPair, long orderNumber);
 
         Task<Ticker> GetTicker(string tradingPair);
     }
