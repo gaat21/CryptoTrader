@@ -4,7 +4,6 @@ using System.Linq;
 namespace CryptoTrading.Logic.Utils
 {
     public class FixedSizedQueue<T>
-        where T : struct 
     {
         private readonly Queue<T> _queue;
         private readonly int _size;
@@ -26,6 +25,11 @@ namespace CryptoTrading.Logic.Utils
                 _queue.Dequeue();
                 _queue.Enqueue(obj);
             }
+        }
+
+        public void Clear()
+        {
+            _queue.Clear();
         }
 
         public int QueueSize => _queue.Count;

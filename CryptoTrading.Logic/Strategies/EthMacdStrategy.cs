@@ -16,7 +16,7 @@ namespace CryptoTrading.Logic.Strategies
         private readonly IIndicator _shortEmaIndicator;
         private readonly IIndicator _longEmaIndicator;
         private readonly IIndicator _signalEmaIndicator;
-        private readonly IIndicator _tdiIndicator;
+        //private readonly IIndicator _tdiIndicator;
 
         private TrendDirection _lastTrend = TrendDirection.Short;
         private decimal _lastBuyPrice;
@@ -32,7 +32,9 @@ namespace CryptoTrading.Logic.Strategies
         private bool _macdSwitch;
         private int _candleCount = 1;
         private decimal _lastClosePrice;
-        private readonly FixedSizedQueue<decimal> _fixedSizedQueue;
+        private readonly FixedSizedQueue<MacdStatistic> _macdStatistcsQueue;
+        private readonly FixedSizedQueue<MacdStatistic> _macdTempStatisticsQueue;
+        private MacdDirection _macdDirection = MacdDirection.GreaterThanZero;
 
         public EthMacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -41,8 +43,9 @@ namespace CryptoTrading.Logic.Strategies
             _longEmaIndicator = indicatorFactory.GetEmaIndicator(_options.LongWeight);
             _signalEmaIndicator = indicatorFactory.GetEmaIndicator(_options.Signal);
 
-            _tdiIndicator = indicatorFactory.GetTdiIndicator(_options.TdiPeriod);
-            _fixedSizedQueue = new FixedSizedQueue<decimal>(50);
+            //_tdiIndicator = indicatorFactory.GetTdiIndicator(_options.TdiPeriod);
+            _macdStatistcsQueue = new FixedSizedQueue<MacdStatistic>(6);
+            _macdTempStatisticsQueue = new FixedSizedQueue<MacdStatistic>(200);
         }
 
         public int CandleSize => 1;
@@ -51,26 +54,24 @@ namespace CryptoTrading.Logic.Strategies
         {
             var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             var longEmaValue = _longEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
-            var tdiValue = _tdiIndicator.GetIndicatorValue(currentCandle.ClosePrice).IndicatorValue;
+            //var tdiValue = _tdiIndicator.GetIndicatorValue(currentCandle.ClosePrice).IndicatorValue;
             var emaDiffValue = shortEmaValue - longEmaValue;
             var signalEmaValue = Math.Round(_signalEmaIndicator.GetIndicatorValue(emaDiffValue).IndicatorValue, 4);
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
 
-            _fixedSizedQueue.Enqueue(currentCandle.ClosePrice);
-
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
                               $"MACD: {macdValue};\t" +
-                              $"TDI: {tdiValue};\t" +
-                              $"PeekMACD: {_maxOrMinMacd};\t" +
-                              $"Queue({_fixedSizedQueue.QueueSize}) avg price: {_fixedSizedQueue.GetItems().Average()};\t" +
                               $"Close price: {currentCandle.ClosePrice};");
 
-            if (!_lastMacd.HasValue)
+            if (!_lastMacd.HasValue || _lastMacd == 0)
             {
                 _lastMacd = macdValue;
                 _lastClosePrice = currentCandle.ClosePrice;
+                _macdDirection = macdValue < 0 ? MacdDirection.LessThanZero : MacdDirection.GreaterThanZero;
                 return await Task.FromResult(TrendDirection.None);
             }
+
+            CreateMacdStatistics(macdValue, currentCandle);
 
             if (_lastMacd < 0 && macdValue >= 0)
             {
@@ -131,7 +132,6 @@ namespace CryptoTrading.Logic.Strategies
                 if (_stopTrading == false
                     && macdValue < _options.BuyThreshold
                     && diffPreviousMacd < -(decimal)0.1
-                    && tdiValue > 0
                     && macdValue > _lastMacd
                     && currentCandle.ClosePrice > _lastClosePrice)
                 {
@@ -145,6 +145,15 @@ namespace CryptoTrading.Logic.Strategies
                         _stopTrading = true;
                         return await Task.FromResult(TrendDirection.None);
                     }
+
+                    //var allStats = _macdStatistcsQueue.GetItems();
+                    //if (allStats.Count == 6)
+                    //{
+                    //    Console.WriteLine($"Stat-1: {allStats[5]} - Stat-2: {allStats[4]}");
+                    //    Console.WriteLine($"Stat-3: {allStats[3]} - Stat-4: {allStats[2]}");
+                    //    Console.WriteLine($"Stat-5: {allStats[1]} - Stat-6: {allStats[0]}");
+                    //    Console.WriteLine();
+                    //}
 
                     _lastTrend = TrendDirection.Long;
                     _maxOrMinMacd = 0;
@@ -194,5 +203,71 @@ namespace CryptoTrading.Logic.Strategies
 
             return await Task.FromResult(_lastTrend);
         }
+
+        private void CreateMacdStatistics(decimal macdValue, CandleModel currentCandle)
+        {
+            var macdStatistic = new MacdStatistic
+            {
+                Macd = macdValue,
+                Candle = currentCandle
+            };
+
+            if (macdValue > 0)
+            {
+                if (_macdDirection == MacdDirection.LessThanZero)
+                {
+                    _macdDirection = MacdDirection.GreaterThanZero;
+
+                    var minMacd = _macdTempStatisticsQueue.GetItems().Min(s => s.Macd);
+                    var stat = _macdTempStatisticsQueue.GetItems().First(f => f.Macd == minMacd);
+
+                    stat.TrendCount = _macdTempStatisticsQueue.GetItems().Count;
+                    _macdStatistcsQueue.Enqueue(stat);
+                    _macdTempStatisticsQueue.Clear();
+                }
+
+                macdStatistic.Direction = _macdDirection;
+                _macdTempStatisticsQueue.Enqueue(macdStatistic);
+            }
+            else
+            {
+                if (_macdDirection == MacdDirection.GreaterThanZero)
+                {
+                    _macdDirection = MacdDirection.LessThanZero;
+
+                    var maxMacd = _macdTempStatisticsQueue.GetItems().Max(s => s.Macd);
+                    var stat = _macdTempStatisticsQueue.GetItems().First(f => f.Macd == maxMacd);
+
+                    stat.TrendCount = _macdTempStatisticsQueue.GetItems().Count;
+                    _macdStatistcsQueue.Enqueue(stat);
+                    _macdTempStatisticsQueue.Clear();
+                }
+
+                macdStatistic.Direction = _macdDirection;
+                _macdTempStatisticsQueue.Enqueue(macdStatistic);
+            }
+        }
+    }
+
+    public class MacdStatistic
+    {
+        public CandleModel Candle { get; set; }
+
+        public decimal Macd { get; set; }
+
+        public int TrendCount { get; set; }
+
+        public MacdDirection Direction { get; set; }
+
+        public override string ToString()
+        {
+            return $"Macd: {Macd};\tTrendCount: {TrendCount};\tClosePrice: {Candle.ClosePrice};";
+        }
+    }
+
+    public enum MacdDirection
+    {
+        LessThanZero,
+        GreaterThanZero
     }
 }
