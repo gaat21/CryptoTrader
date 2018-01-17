@@ -22,6 +22,7 @@ namespace CryptoTrading.Logic.Strategies
         private decimal _lastBuyPrice;
         private decimal _maxOrMinMacd;
         private decimal _minMacd;
+        private decimal _minWarmupMacd;
         private decimal _maxMacd;
         private decimal _maxMacdClosePrice;
         private decimal _minMacdClosePrice;
@@ -35,6 +36,7 @@ namespace CryptoTrading.Logic.Strategies
         private readonly FixedSizedQueue<MacdStatistic> _macdStatistcsQueue;
         private readonly FixedSizedQueue<MacdStatistic> _macdTempStatisticsQueue;
         private MacdDirection _macdDirection = MacdDirection.GreaterThanZero;
+        private readonly FixedSizedQueue<decimal> _volumenQueue;
 
         public EthMacdStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
@@ -46,6 +48,7 @@ namespace CryptoTrading.Logic.Strategies
             //_tdiIndicator = indicatorFactory.GetTdiIndicator(_options.TdiPeriod);
             _macdStatistcsQueue = new FixedSizedQueue<MacdStatistic>(6);
             _macdTempStatisticsQueue = new FixedSizedQueue<MacdStatistic>(200);
+            _volumenQueue = new FixedSizedQueue<decimal>(100);
         }
 
         public int CandleSize => 1;
@@ -59,9 +62,14 @@ namespace CryptoTrading.Logic.Strategies
             var signalEmaValue = Math.Round(_signalEmaIndicator.GetIndicatorValue(emaDiffValue).IndicatorValue, 4);
             var macdValue = Math.Round(emaDiffValue - signalEmaValue, 4);
 
+            var avgVolumen = Math.Round(_volumenQueue.GetItems().Average(), 8);
+
             Console.WriteLine($"DateTs: {currentCandle.StartDateTime:s}; " +
                               $"MACD: {macdValue};\t" +
+                              $"Volumen avg: {avgVolumen}; Current volumen: {currentCandle.Volume};\t" +
                               $"Close price: {currentCandle.ClosePrice};");
+
+            _volumenQueue.Enqueue(currentCandle.Volume);
 
             if (!_lastMacd.HasValue || _lastMacd == 0)
             {
@@ -113,6 +121,11 @@ namespace CryptoTrading.Logic.Strategies
             if (_candleCount <= 60)
             {
                 _candleCount++;
+                if (macdValue < 0 && macdValue < _minWarmupMacd)
+                {
+                    _minWarmupMacd = macdValue;
+                }
+                Console.WriteLine($"Min warmup Macd: {_minWarmupMacd}");
                 return await Task.FromResult(TrendDirection.None);
             }
 
@@ -126,12 +139,20 @@ namespace CryptoTrading.Logic.Strategies
                 if (macdValue < 0 && macdValue < _lastMacd)
                 {
                     _maxOrMinMacd = macdValue;
-                } 
+                }
+
+                //if (macdValue < 0)
+                //{
+                //    _macdRate = (1 - Math.Round(_minMacdClosePrice / _maxMacdClosePrice, 4)) * 100;
+                //    Console.WriteLine($"MaxMacd: {_maxMacdClosePrice}; MinMacd: {_minMacdClosePrice}; Rate: {_macdRate}%");
+                //}
 
                 var diffPreviousMacd = _maxOrMinMacd - macdValue;
                 if (_stopTrading == false
                     && macdValue < _options.BuyThreshold
+                    //&& macdValue < _minWarmupMacd * (decimal)2.0
                     && diffPreviousMacd < -(decimal)0.1
+                    && currentCandle.Volume >= avgVolumen * (decimal)1.5
                     && macdValue > _lastMacd
                     && currentCandle.ClosePrice > _lastClosePrice)
                 {
@@ -140,7 +161,7 @@ namespace CryptoTrading.Logic.Strategies
 
                     _macdRate = (1 - Math.Round(_minMacdClosePrice / _maxMacdClosePrice, 4)) * 100;
                     Console.WriteLine($"MaxMacd: {_maxMacdClosePrice}; MinMacd: {_minMacdClosePrice}; Rate: {_macdRate}%");
-                    if (_macdRate < (decimal)1.0 || _macdRate > (decimal)6.0)
+                    if (_macdRate < (decimal)2.0 /*|| _macdRate > (decimal)6.0*/)
                     {
                         _stopTrading = true;
                         return await Task.FromResult(TrendDirection.None);
