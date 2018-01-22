@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using CryptoTrading.Logic;
+using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Repositories.Interfaces;
 using CryptoTrading.Logic.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,7 +64,7 @@ namespace TradingTester
                 Console.WriteLine($"Selected option: {selectedOption}; Candle count: {candles.Count}");
 
                 var backtesTraderService = serviceProvider.GetService<ITraderService>();
-                backtesTraderService.CheckStrategyAsync(candles);
+                backtesTraderService.CheckStrategyAsync(options.TradingPair, candles);
                 
                 Console.WriteLine("############ SUMMARY ############");
                 var userBalanceService = serviceProvider.GetService<IUserBalanceService>();
@@ -79,7 +80,8 @@ namespace TradingTester
 
             if (options.EnableOrderTesting)
             {
-                //var exchangeProvider = serviceProvider.GetService<IExchangeProvider>();
+                var exchangeProvider = serviceProvider.GetService<IExchangeProvider>();
+                var depthModel = exchangeProvider.GetDepth(options.TradingPair).Result;
 
                 //decimal price = 19150;
                 //decimal defaultAmount = 10;

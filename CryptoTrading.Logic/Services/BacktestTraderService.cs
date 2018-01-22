@@ -22,7 +22,7 @@ namespace CryptoTrading.Logic.Services
             _userBalanceService = userBalanceService;
         }
 
-        public async Task CheckStrategyAsync(List<CandleModel> candles)
+        public async Task CheckStrategyAsync(string tradingPair, List<CandleModel> candles)
         {
             if (candles.Count == 0)
             {
@@ -36,7 +36,7 @@ namespace CryptoTrading.Logic.Services
                 var startIndex = i - _strategy.CandleSize;
                 var prevCandles = candles.GetRange(startIndex < 0 ? 0 : startIndex, _strategy.CandleSize);
                 var currentCandle = candles[i];
-                var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
+                var trendDirection = await _strategy.CheckTrendAsync(tradingPair, prevCandles, currentCandle);
 
                 //Console.WriteLine($"({i + 1}) - DateTs: {currentCandle.StartDateTime:s}; Trend: {trendDirection}; Open: {currentCandle.OpenPrice}; Close: {currentCandle.ClosePrice}; Low: {currentCandle.LowPrice}; High: {currentCandle.HighPrice}; Volumen: {currentCandle.Volume}");
                 if (trendDirection == TrendDirection.None)

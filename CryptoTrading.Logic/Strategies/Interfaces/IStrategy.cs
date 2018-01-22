@@ -8,6 +8,6 @@ namespace CryptoTrading.Logic.Strategies.Interfaces
     {
         int CandleSize { get; }
 
-        Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle);
+        Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle);
     }
 }

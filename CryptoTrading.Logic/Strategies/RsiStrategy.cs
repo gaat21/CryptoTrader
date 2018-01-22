@@ -18,7 +18,7 @@ namespace CryptoTrading.Logic.Strategies
             _rsiIndicator = indicatorFactory.GetRsiIndicator(14);
         }
 
-        public Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
         {
             var rsiValue = _rsiIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             Console.WriteLine($"Rsi value: {rsiValue}");

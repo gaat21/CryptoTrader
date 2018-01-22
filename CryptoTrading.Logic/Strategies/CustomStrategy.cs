@@ -26,7 +26,7 @@ namespace CryptoTrading.Logic.Strategies
 
         public int CandleSize => 5;
 
-        public async Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public async Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
         {
             var price = currentCandle.ClosePrice;
             var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;

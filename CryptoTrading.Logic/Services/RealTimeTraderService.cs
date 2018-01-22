@@ -44,14 +44,14 @@ namespace CryptoTrading.Logic.Services
             _emailService = emailService;
         }
 
-        public async Task CheckStrategyAsync(List<CandleModel> candles)
+        public async Task CheckStrategyAsync(string tradingPair, List<CandleModel> candles)
         {
             for (int i = 0; i < candles.Count; i++)
             {
                 var startIndex = i - _strategy.CandleSize;
                 var prevCandles = candles.GetRange(startIndex < 0 ? 0 : startIndex, _strategy.CandleSize);
                 var currentCandle = candles[i];
-                var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
+                var trendDirection = await _strategy.CheckTrendAsync(tradingPair, prevCandles, currentCandle);
 
                 if (trendDirection == TrendDirection.None)
                 {
@@ -91,11 +91,11 @@ namespace CryptoTrading.Logic.Services
                         _userBalanceService.FirstPrice = currentCandle;
                         _isSetFirstPrice = true;
                     }
-                    var trendDirection = await _strategy.CheckTrendAsync(prevCandles, currentCandle);
+                    var trendDirection = await _strategy.CheckTrendAsync(tradingPair, prevCandles, currentCandle);
 
                     await _candleRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(new List<CandleModel> {currentCandle}), lastScanId);
 
-                    Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}; Volumen: {currentCandle.Volume}; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
+                    //Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}; Volumen: {currentCandle.Volume}; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
                     _lastTrendDirection = trendDirection;
                     if (trendDirection == TrendDirection.Long)
                     {

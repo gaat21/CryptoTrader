@@ -52,6 +52,11 @@ namespace CryptoTrading.Logic.Providers
             throw new NotImplementedException();
         }
 
+        public Task<DepthModel> GetDepth(string tradingPair)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task<IEnumerable<CandleModel>> GetTradesAsync(string endPointUrl)
         {
             using (var client = GetClient())

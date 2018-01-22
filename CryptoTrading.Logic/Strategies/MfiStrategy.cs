@@ -20,7 +20,7 @@ namespace CryptoTrading.Logic.Strategies
         }
 
         public int CandleSize => 1;
-        public Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
         {
             var mfiValue = _mfiIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             Console.WriteLine($"Mfi indicator value: {mfiValue}");

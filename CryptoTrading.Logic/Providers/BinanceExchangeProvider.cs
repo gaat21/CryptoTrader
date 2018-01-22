@@ -6,12 +6,14 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CryptoTrading.Logic.Providers
 {
@@ -205,6 +207,49 @@ namespace CryptoTrading.Logic.Providers
                         HighestBid = deserializedResponse.BidPrice,
                         LowestAsk = deserializedResponse.AskPrice
                     };
+                }
+            }
+        }
+
+        public async Task<DepthModel> GetDepth(string tradingPair)
+        {
+            using (var client = GetClient())
+            {
+                using (var response = await client.GetAsync($"/api/v1/depth?symbol={tradingPair}"))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}");
+                    }
+
+                    var depthModel = new DepthModel
+                    {
+                        Bids = new List<PriceRateModel>(),
+                        Asks = new List<PriceRateModel>()
+                    };
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var obj = (JObject)JsonConvert.DeserializeObject(responseContent);
+                    var bidArray = obj["bids"].ToArray();
+                    foreach (var bid in bidArray)
+                    {
+                        var bidPriceAndRate = bid.ToArray();
+                        depthModel.Bids.Add(new PriceRateModel
+                        {
+                            Price = (decimal)bidPriceAndRate[0],
+                            Quantity = (decimal)bidPriceAndRate[1]
+                        });
+                    }
+                    var askArray = obj["asks"].ToArray();
+                    foreach (var ask in askArray)
+                    {
+                        var askPriceAndRate = ask.ToArray();
+                        depthModel.Asks.Add(new PriceRateModel
+                        {
+                            Price = (decimal)askPriceAndRate[0],
+                            Quantity = (decimal)askPriceAndRate[1]
+                        });
+                    }
+                    return depthModel;
                 }
             }
         }

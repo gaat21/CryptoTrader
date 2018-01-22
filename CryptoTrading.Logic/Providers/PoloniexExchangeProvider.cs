@@ -206,6 +206,11 @@ namespace CryptoTrading.Logic.Providers
             }
         }
 
+        public Task<DepthModel> GetDepth(string tradingPair)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<long> CreateOrderAsync(TradeType tradeType, string tradingPair, decimal rate, decimal amount)
         {
             var nonce = GenerateNonce();

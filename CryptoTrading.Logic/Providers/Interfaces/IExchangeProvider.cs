@@ -16,5 +16,7 @@ namespace CryptoTrading.Logic.Providers.Interfaces
         Task<IEnumerable<OrderDetail>> GetOrderAsync(string tradingPair, long orderNumber);
 
         Task<Ticker> GetTicker(string tradingPair);
+
+        Task<DepthModel> GetDepth(string tradingPair);
     }
 }

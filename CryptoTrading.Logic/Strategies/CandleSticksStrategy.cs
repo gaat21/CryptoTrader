@@ -18,7 +18,7 @@ namespace CryptoTrading.Logic.Strategies
             _candleSticksIndicator = candleSticksIndicator;
         }
 
-        public Task<TrendDirection> CheckTrendAsync(List<CandleModel> previousCandles, CandleModel currentCandle)
+        public Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
         {
             var candleSticksValue = _candleSticksIndicator.GetIndicatorValue(currentCandle);
             if (_lastTrend == TrendDirection.Short)

@@ -109,5 +109,10 @@ namespace CryptoTrading.Logic.Providers
         {
             throw new NotImplementedException();
         }
+
+        public Task<DepthModel> GetDepth(string tradingPair)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
