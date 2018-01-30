@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CryptoTrading.DAL.Models;
 using CryptoTrading.Logic.Models;
+using CryptoTrading.Logic.Providers;
 using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Repositories.Interfaces;
@@ -213,7 +214,15 @@ namespace CryptoTrading.Logic.Services
                         Console.WriteLine($"Open order invoked. OrderNumber: {orderNumber}; OrderDetails: {JsonConvert.SerializeObject(orderDetail)}");
                         if (tradeType == TradeType.Buy)
                         {
-                            _userBalanceService.Rate -= Math.Round(_userBalanceService.Rate * orderDetail.Fee, 8);
+                            if (_exchangeProvider is PoloniexExchangeProvider)
+                            {
+                                _userBalanceService.Rate -= Math.Round(_userBalanceService.Rate * orderDetail.Fee, 8);
+                            }
+                            else
+                            {
+                                _userBalanceService.Rate = orderDetail.Rate;
+                            }
+                            
                             Console.WriteLine($"Real rate: {_userBalanceService.Rate}");
                         }
                         _userBalanceService.HasOpenOrder = false;

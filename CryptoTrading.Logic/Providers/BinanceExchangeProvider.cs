@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers.Interfaces;
@@ -20,7 +19,7 @@ namespace CryptoTrading.Logic.Providers
     public class BinanceExchangeProvider : HttpBaseProvider, IExchangeProvider
     {
         private readonly BinanceOptions _binanceOptions;
-        private const int RecvWindow = 10000; // 10 seconds to receive the reqest to exchange server
+        private const int RecvWindow = 30000; // 30 seconds to receive the reqest to exchange server
 
         public BinanceExchangeProvider(IOptions<BinanceOptions> binanceOptions) : base(binanceOptions.Value.ApiUrl)
         {
@@ -38,7 +37,7 @@ namespace CryptoTrading.Logic.Providers
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"Response code: {response.StatusCode}");
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
                     }
 
                     var resultResponseContent = await response.Content.ReadAsStringAsync();
@@ -72,9 +71,10 @@ namespace CryptoTrading.Logic.Providers
             var createdTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var formParameters = $"symbol={tradingPair}" +
                                  $"&side={tradeType.ToString().ToUpper()}" +
-                                 "&type=limit&timeInForce=GTC" +
-                                 $"&quantity={rate.ToString(CultureInfo.InvariantCulture)}" +
-                                 $"&price={amount.ToString(CultureInfo.InvariantCulture)}" +
+                                 "&type=LIMIT" +
+                                 "&timeInForce=GTC" +
+                                 $"&quantity={Math.Round(amount, 5).ToString(CultureInfo.InvariantCulture)}" +
+                                 $"&price={Math.Round(rate, 2).ToString(CultureInfo.InvariantCulture)}" +
                                  $"&recvWindow={RecvWindow}" +
                                  $"&timestamp={createdTs}";
 
@@ -86,21 +86,21 @@ namespace CryptoTrading.Logic.Providers
                 var requestBody = new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("symbol", tradingPair),
-                    new KeyValuePair<string, string>("side", tradeType.ToString().ToLower()),
-                    new KeyValuePair<string, string>("type", "limit"),
+                    new KeyValuePair<string, string>("side", tradeType.ToString().ToUpper()),
+                    new KeyValuePair<string, string>("type", "LIMIT"),
                     new KeyValuePair<string, string>("timeInForce", "GTC"),
-                    new KeyValuePair<string, string>("quantity", rate.ToString(CultureInfo.InvariantCulture)),
-                    new KeyValuePair<string, string>("price", amount.ToString(CultureInfo.InvariantCulture)),
+                    new KeyValuePair<string, string>("quantity", Math.Round(amount, 5).ToString(CultureInfo.InvariantCulture)),
+                    new KeyValuePair<string, string>("price", Math.Round(rate, 2).ToString(CultureInfo.InvariantCulture)),
                     new KeyValuePair<string, string>("recvWindow", RecvWindow.ToString()),
                     new KeyValuePair<string, string>("timestamp", createdTs.ToString()),
-                    new KeyValuePair<string, string>("signature", signature)
+                    new KeyValuePair<string, string>("signature", signature.ToLower())
                 });
 
-                using (var response = await client.PostAsync("/api/v3/order/test", requestBody))
+                using (var response = await client.PostAsync("/api/v3/order", requestBody))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"Response code: {response.StatusCode}");
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
                     }
 
                     var responseDefinition = new { OrderId = long.MaxValue };
@@ -133,7 +133,7 @@ namespace CryptoTrading.Logic.Providers
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"Response code: {response.StatusCode}");
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
                     }
 
                     var responseContent = await response.Content.ReadAsStringAsync();
@@ -164,10 +164,10 @@ namespace CryptoTrading.Logic.Providers
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"Response code: {response.StatusCode}");
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
                     }
 
-                    var responseDefinition = new { OrderId = long.MaxValue, Status = BinanceStatus.New };
+                    var responseDefinition = new { OrderId = long.MaxValue, Status = BinanceStatus.New, executedQty = decimal.MaxValue };
                     var responseContent = await response.Content.ReadAsStringAsync();
                     if (responseContent.ToLower().Contains("error"))
                     {
@@ -175,15 +175,51 @@ namespace CryptoTrading.Logic.Providers
                         return null;
                     }
                     var deserializedResponse = JsonConvert.DeserializeAnonymousType(responseContent, responseDefinition);
-                    return deserializedResponse.Status == BinanceStatus.Filled
-                        ? new List<OrderDetail>
+                    if (deserializedResponse.Status != BinanceStatus.Filled)
+                    {
+                        return null;
+                    }
+                    var freeBalance = await GetBalanceAsync(tradingPair);
+                    return new List<OrderDetail>
                         {
                             new OrderDetail
                             {
-                                CurrencyPair = tradingPair
+                                CurrencyPair = tradingPair,
+                                Rate = Math.Floor(freeBalance * 100000) / 100000
                             }
-                        }
-                        : null;
+                        };
+                }
+            }
+        }
+
+        private async Task<decimal> GetBalanceAsync(string tradingPair)
+        {
+            var createdTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var formParameters = $"&recvWindow={RecvWindow}" +
+                                 $"&timestamp={createdTs}";
+
+            using (var client = GetClient())
+            {
+                client.DefaultRequestHeaders.Add("X-MBX-APIKEY", _binanceOptions.ApiKey);
+                var signature = SignPostBody(formParameters);
+
+                using (var response = await client.GetAsync($"/api/v3/account?{formParameters}&signature={signature}"))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
+                    }
+
+                    var responseDefinition = new { Balances = new List<BalanceItem>() };
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    if (responseContent.ToLower().Contains("error"))
+                    {
+                        Console.WriteLine($"Error: {responseContent}");
+                        return -1;
+                    }
+                    var deserializedResponse = JsonConvert.DeserializeAnonymousType(responseContent, responseDefinition);
+                    var balanceItem = deserializedResponse.Balances.FirstOrDefault(w => w.Asset == tradingPair.ToUpper().Replace("USDT", ""));
+                    return balanceItem?.FreeBalance ?? -1;
                 }
             }
         }
@@ -196,7 +232,7 @@ namespace CryptoTrading.Logic.Providers
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"Response code: {response.StatusCode}");
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
                     }
 
                     var responseDefinition = new { Symbol = "", BidPrice = (decimal)0.0, AskPrice = (decimal)0.0 };
@@ -219,7 +255,7 @@ namespace CryptoTrading.Logic.Providers
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"Response code: {response.StatusCode}");
+                        throw new Exception($"Response code: {response.StatusCode}, body: {response.Content.ReadAsStringAsync().Result}");
                     }
 
                     var depthModel = new DepthModel
@@ -256,10 +292,17 @@ namespace CryptoTrading.Logic.Providers
 
         private string SignPostBody(string formParameters)
         {
-            var hmacHash = new HMACSHA512(Encoding.UTF8.GetBytes(_binanceOptions.ApiSecret));
+            var hmacHash = new HMACSHA256(Encoding.UTF8.GetBytes(_binanceOptions.ApiSecret));
             var signedParametersByteArray = hmacHash.ComputeHash(Encoding.UTF8.GetBytes(formParameters));
             return BitConverter.ToString(signedParametersByteArray).Replace("-", "");
         }
+    }
+
+    public class BalanceItem
+    {
+        public string Asset { get; set; }
+        [JsonProperty("free")]
+        public decimal FreeBalance { get; set; }
     }
 
     public enum BinanceStatus

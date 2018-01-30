@@ -7,5 +7,7 @@
         public string ApiKey { get; set; }
 
         public string ApiSecret { get; set; }
+
+        public decimal Fee { get; set; }
     }
 }

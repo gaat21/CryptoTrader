@@ -15,5 +15,7 @@
         public decimal BuyThreshold { get; set; }
 
         public decimal SellThreshold { get; set; }
+
+        public decimal ProfitEstimationRate { get; set; }
     }
 }
