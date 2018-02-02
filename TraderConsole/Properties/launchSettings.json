@@ -2,7 +2,7 @@
   "profiles": {
     "TraderConsole": {
       "commandName": "Project",
-      "commandLineArgs": "-e Bitfinex -t \"tBTCUSD\" -s Macd"
+      "commandLineArgs": "-e Binance -t \"ETHUSDT\" -s EthMacd"
     }
   }
 }

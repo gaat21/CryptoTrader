@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CryptoTrading.DAL.Models;
 using CryptoTrading.Logic.Models;
+using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers;
 using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Repositories.Interfaces;
 using CryptoTrading.Logic.Services.Interfaces;
 using CryptoTrading.Logic.Strategies.Interfaces;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace CryptoTrading.Logic.Services
@@ -24,6 +26,7 @@ namespace CryptoTrading.Logic.Services
         private readonly IExchangeProvider _exchangeProvider;
         private readonly ICandleRepository _candleRepository;
         private readonly IEmailService _emailService;
+        private readonly CryptoTradingOptions _cryptoTradingOptions;
         private int _delayInMilliseconds = 60000;
         private string _tradingPair;
 
@@ -36,13 +39,15 @@ namespace CryptoTrading.Logic.Services
                                      IUserBalanceService userBalanceService,
                                      IExchangeProvider exchangeProvider, 
                                      ICandleRepository candleRepository,
-                                     IEmailService emailService)
+                                     IEmailService emailService,
+                                     IOptions<CryptoTradingOptions> options)
         {
             _strategy = strategy;
             _userBalanceService = userBalanceService;
             _exchangeProvider = exchangeProvider;
             _candleRepository = candleRepository;
             _emailService = emailService;
+            _cryptoTradingOptions = options.Value;
         }
 
         public async Task CheckStrategyAsync(string tradingPair, List<CandleModel> candles)
@@ -157,7 +162,7 @@ namespace CryptoTrading.Logic.Services
 
                 var msg = $"Buy crypto currency. Date: {candle.StartDateTime}; Price: ${buyPrice}; Rate: {_userBalanceService.Rate}; OrderNumber: {_userBalanceService.OpenOrderNumber}\n";
                 Console.WriteLine(msg);
-                _emailService.SendEmail($"Trading with {_tradingPair}", msg);
+                _emailService.SendEmail(string.Format(_cryptoTradingOptions.EmailSubject, _tradingPair), msg);
             }
         }
 
@@ -190,7 +195,7 @@ namespace CryptoTrading.Logic.Services
 
                 Console.WriteLine(msg);
 
-                _emailService.SendEmail($"Trading with {_tradingPair}", msg);
+                _emailService.SendEmail(string.Format(_cryptoTradingOptions.EmailSubject, _tradingPair), msg);
             }
         }
 

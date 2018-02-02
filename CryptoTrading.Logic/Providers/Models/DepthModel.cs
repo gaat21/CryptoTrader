@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace CryptoTrading.Logic.Providers.Models
 {
@@ -17,7 +18,7 @@ namespace CryptoTrading.Logic.Providers.Models
 
         public override string ToString()
         {
-            return $"${Price}/{Quantity}";
+            return $"${Math.Round(Price, 4)}/{Math.Round(Quantity, 4)}";
         }
     }
 }

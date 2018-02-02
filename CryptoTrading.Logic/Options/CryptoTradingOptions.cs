@@ -7,5 +7,7 @@
         public bool EnableRealtimeTrading { get; set; }
 
         public decimal TradingFee { get; set; }
+
+        public string EmailSubject { get; set; }
     }
 }

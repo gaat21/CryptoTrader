@@ -1,13 +1,21 @@
 ﻿{
   "CryptoTrading": {
-    "AmountInUsdt": 100
+    "AmountInUsdt": 25,
+    "EnableRealtimeTrading": false,
+    "TradingFee": 0.2,
+    "EmailSubject": "Trading with {0}" 
   },
   "Email": {
-    "Enable": false
+    "Enable": false,
+    "FromAddress": "",
+    "FromName": "Crypto Trader",
+    "ToAddress": "",
+    "ToName": "Attila Gárgyán",
+    "FromPassword": ""
   },
   "Database": {
-    "ConnectionString": "server=localhost;database=trading;user id=root;password=123456;SslMode=none"
-  },
+    "ConnectionString": "server=localhost;database=trading2;user id=root;password=123456;SslMode=none"
+  }, 
   "Kraken": {
     "ApiUrl": "https://api.kraken.com",
     "ApiKey": ""
@@ -19,19 +27,28 @@
   },
   "Bitfinex": {
     "ApiUrl": "https://api.bitfinex.com",
-    "ApiKey": "",
+    "ApiKey": "68WePZb20vLrJlcw7Al073Zg52wdC8dCoYRlG4b38ui",
     "ApiSecret": ""
+  },
+  "Binance": {
+    "ApiUrl": " https://api.binance.com",
+    "ApiKey": "",
+    "ApiSecret": "",
+    "Fee":  0.2 
   },
   "EmaStrategy": {
     "ShortWeight": 10,
     "LongWeight": 30
   },
   "MacdStrategy": {
+    "VeryLongWeight": 80,
+    "TdiPeriod":  60, 
     "ShortWeight": 12,
     "LongWeight": 26,
     "Signal": 9,
-    "BuyThreshold": -4.0,
-    "SellThreshold": 8.0
+    "ProfitEstimationRate": 1.0, 
+    "BuyThreshold": 0.0, //-10.0,
+    "SellThreshold": 0.0//15.0
   },
   "MfiStrategy": {
     "MfiWeight": 5
