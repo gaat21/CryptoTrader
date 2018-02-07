@@ -9,5 +9,7 @@
         IIndicator GetMfiIndicator(int weight);
 
         IIndicator GetTdiIndicator(int period);
+
+        IIndicator GetIchimokuCloud();
     }
 }

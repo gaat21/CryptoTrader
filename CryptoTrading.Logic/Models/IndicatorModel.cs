@@ -5,5 +5,7 @@
         public decimal IndicatorValue { get; set; }
 
         public CandleFormat CandleFormat { get; set; } = CandleFormat.None;
+
+        public IchimokuCloudModel IchimokuCloud { get; set; }
     }
 }

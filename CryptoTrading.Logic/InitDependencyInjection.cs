@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using CryptoTrading.DAL;
 using CryptoTrading.Logic.Indicators;
 using CryptoTrading.Logic.Indicators.Interfaces;
@@ -7,12 +9,10 @@ using CryptoTrading.Logic.Models;
 using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers;
 using CryptoTrading.Logic.Providers.Interfaces;
-using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Repositories;
 using CryptoTrading.Logic.Repositories.Interfaces;
 using CryptoTrading.Logic.Services;
 using CryptoTrading.Logic.Services.Interfaces;
-using CryptoTrading.Logic.Strategies;
 using CryptoTrading.Logic.Strategies.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +22,7 @@ namespace CryptoTrading.Logic
 {
     public static class InitDependencyInjection
     {
-        public static IServiceProvider Init(ExchangeEnum exchange, Strategy strategy, bool isBacktest = false)
+        public static IServiceProvider Init(ExchangeEnum exchange, string strategyName, bool isBacktest = false)
         {
             var configuration = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("Configs/config.json", optional: false)
@@ -76,6 +76,7 @@ namespace CryptoTrading.Logic
             {
                 serviceCollection.AddTransient<ITraderService, RealTimeTraderService>();
             }
+
             serviceCollection.AddTransient<ICandleService, CandleDbService>();
             serviceCollection.AddTransient<IEmailService, EmailService>();
             serviceCollection.AddTransient<IIndicatorFactory, IndicatorFactory>();
@@ -84,36 +85,23 @@ namespace CryptoTrading.Logic
             serviceCollection.AddTransient<IIndicator, RsiIndicator>();
             serviceCollection.AddTransient<IIndicator, TdiIndicator>();
             serviceCollection.AddTransient<IIndicator, CandleSticksIndicator>();
+            serviceCollection.AddTransient<IIndicator, IchimokuCloudIndicator>();
 
-            switch (strategy)
-            {
-                case Strategy.Ema:
-                    serviceCollection.AddTransient<IStrategy, EmaStrategy>();
-                    break;
-                case Strategy.Rsi:
-                    serviceCollection.AddTransient<IStrategy, RsiStrategy>();
-                    break;
-                case Strategy.Macd:
-                    serviceCollection.AddTransient<IStrategy, MacdStrategy>();
-                    break;
-                case Strategy.LtcMacd:
-                    serviceCollection.AddTransient<IStrategy, LtcMacdStrategy>();
-                    break;
-                case Strategy.EthMacd:
-                    serviceCollection.AddTransient<IStrategy, EthMacdStrategy>();
-                    break;
-                case Strategy.Mfi:
-                    serviceCollection.AddTransient<IStrategy, MfiStrategy>();
-                    break;
-                case Strategy.CandleSticks:
-                    serviceCollection.AddTransient<IStrategy, CandleSticksStrategy>();
-                    break;
-                case Strategy.Custom:
-                    serviceCollection.AddTransient<IStrategy, CustomStrategy>();
-                    break;
-            }
+            RegisterStrategy(serviceCollection, strategyName);
 
             return serviceCollection.BuildServiceProvider();
+        }
+
+        private static void RegisterStrategy(ServiceCollection serviceCollection, string strategyName)
+        {
+            var strategyType = Assembly.GetExecutingAssembly().GetTypes().First(w => w.Name == $"{strategyName}Strategy");
+            if (strategyType == null)
+            {
+                Console.WriteLine($"Strategy not found: {strategyName}");
+                return;
+            }
+
+            serviceCollection.AddTransient(typeof(IStrategy), strategyType);
         }
     }
 }

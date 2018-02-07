@@ -16,6 +16,6 @@ namespace TraderConsole
         public CandlePeriod CandlePeriod { get; set; } = CandlePeriod.OneMinute;
 
         [Option('s', "strategy", HelpText = "Trading strategy")]
-        public Strategy Strategy { get; set; } = Strategy.Custom;
+        public string Strategy { get; set; } = "Custom";
     }
 }

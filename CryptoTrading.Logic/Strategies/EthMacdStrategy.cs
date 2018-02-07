@@ -8,6 +8,7 @@ using CryptoTrading.Logic.Options;
 using CryptoTrading.Logic.Providers.Interfaces;
 using CryptoTrading.Logic.Providers.Models;
 using CryptoTrading.Logic.Strategies.Interfaces;
+using CryptoTrading.Logic.Strategies.Models;
 using CryptoTrading.Logic.Utils;
 using Microsoft.Extensions.Options;
 
@@ -273,27 +274,5 @@ namespace CryptoTrading.Logic.Strategies
                 _macdTempStatisticsQueue.Enqueue(macdStatistic);
             }
         }
-    }
-
-    public class MacdStatistic
-    {
-        public CandleModel Candle { get; set; }
-
-        public decimal Macd { get; set; }
-
-        public int TrendCount { get; set; }
-
-        public MacdDirection Direction { get; set; }
-
-        public override string ToString()
-        {
-            return $"Macd: {Macd};\tTrendCount: {TrendCount};\tClosePrice: {Candle.ClosePrice};";
-        }
-    }
-
-    public enum MacdDirection
-    {
-        LessThanZero,
-        GreaterThanZero
     }
 }

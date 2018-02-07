@@ -23,5 +23,10 @@ namespace CryptoTrading.Logic.Indicators
         {
             return new TdiIndicator(period);
         }
+
+        public IIndicator GetIchimokuCloud()
+        {
+            return new IchimokuCloudIndicator();
+        }
     }
 }
