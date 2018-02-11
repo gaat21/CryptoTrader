@@ -11,14 +11,14 @@ namespace CryptoTrading.Logic.Strategies
         private TrendDirection _lastTrend = TrendDirection.Short;
         private readonly IIndicator _candleSticksIndicator;
         private decimal _lastBuyPrice;
-        public int CandleSize => 1;
+        public int DelayInCandlePeriod => 1;
 
         public CandleSticksStrategy(IIndicator candleSticksIndicator)
         {
             _candleSticksIndicator = candleSticksIndicator;
         }
 
-        public Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
+        public Task<TrendDirection> CheckTrendAsync(string tradingPair, CandleModel currentCandle)
         {
             var candleSticksValue = _candleSticksIndicator.GetIndicatorValue(currentCandle);
             if (_lastTrend == TrendDirection.Short)

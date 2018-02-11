@@ -3,6 +3,7 @@
     public enum CandlePeriod
     {
         OneMinute = 1,
-        FiveMinutes = 5 
+        ThreeMinutes = 3,
+        FiveMinutes = 5
     }
 }

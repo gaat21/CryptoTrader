@@ -52,12 +52,9 @@ namespace CryptoTrading.Logic.Services
 
         public async Task CheckStrategyAsync(string tradingPair, List<CandleModel> candles)
         {
-            for (int i = 0; i < candles.Count; i++)
+            foreach (var currentCandle in candles)
             {
-                var startIndex = i - _strategy.CandleSize;
-                var prevCandles = candles.GetRange(startIndex < 0 ? 0 : startIndex, _strategy.CandleSize);
-                var currentCandle = candles[i];
-                var trendDirection = await _strategy.CheckTrendAsync(tradingPair, prevCandles, currentCandle);
+                var trendDirection = await _strategy.CheckTrendAsync(tradingPair, currentCandle);
 
                 if (trendDirection == TrendDirection.None)
                 {
@@ -82,26 +79,29 @@ namespace CryptoTrading.Logic.Services
             var lastScanId = _candleRepository.GetLatestScanId();
             CandleModel currentCandle = null;
 
+            if (_strategy.DelayInCandlePeriod > 1)
+            {
+                await ExecutePastCandleCheck(tradingPair, candlePeriod, lastScanId);
+            }
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 var startWatcher = new Stopwatch();
                 startWatcher.Start();
                 var candles = await _exchangeProvider.GetCandlesAsync(tradingPair, candlePeriod, lastSince, lastSince + (int)candlePeriod * 60);
                 var candlesList = candles.ToList();
-                if (candlesList.Count == _strategy.CandleSize)
+                if (candlesList.Count == 1)
                 {
-                    var prevCandles = candlesList.GetRange(0, candlesList.Count - 1);
                     currentCandle = candlesList.Last();
                     if (!_isSetFirstPrice)
                     {
                         _userBalanceService.FirstPrice = currentCandle;
                         _isSetFirstPrice = true;
                     }
-                    var trendDirection = await _strategy.CheckTrendAsync(tradingPair, prevCandles, currentCandle);
+                    var trendDirection = await _strategy.CheckTrendAsync(tradingPair, currentCandle);
 
                     await _candleRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(new List<CandleModel> {currentCandle}), lastScanId);
 
-                    //Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: {trendDirection}; Close price: {currentCandle.ClosePrice}; Volumen: {currentCandle.Volume}; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
                     _lastTrendDirection = trendDirection;
                     if (trendDirection == TrendDirection.Long)
                     {
@@ -117,9 +117,11 @@ namespace CryptoTrading.Logic.Services
                     Console.WriteLine($"DateTs: {DateTimeOffset.FromUnixTimeSeconds(lastSince):s}; Trend: [NO TRADES]; Close price: [NO TRADES]; Volumen: [NO TRADES]; Elapsed time: {startWatcher.ElapsedMilliseconds} ms");
                 }
 
+                var utcNow = DateTime.UtcNow;
+                var delayStartInSeconds = (int)candlePeriod * 60 - utcNow.Minute % (int)candlePeriod * 60 - utcNow.Second;
                 // ReSharper disable once MethodSupportsCancellation
-                await Task.Delay((int)(_delayInMilliseconds - startWatcher.ElapsedMilliseconds));
-                lastSince += (int) candlePeriod * _strategy.CandleSize * 60;
+                await Task.Delay(delayStartInSeconds * 1000);
+                lastSince += (int) candlePeriod * 60;
                 startWatcher.Stop();
             }
 
@@ -199,6 +201,21 @@ namespace CryptoTrading.Logic.Services
             }
         }
 
+        private async Task ExecutePastCandleCheck(string tradingPair, CandlePeriod candlePeriod, long lastScanId)
+        {
+            var utcNow = DateTimeOffset.UtcNow;
+            var candleInterval = (int) candlePeriod * 60;
+            var endTime = (utcNow.ToUnixTimeSeconds() - utcNow.ToUnixTimeSeconds() % candleInterval) - candleInterval;
+            var startTime = endTime - candleInterval * _strategy.DelayInCandlePeriod;
+
+            var pastCandles = await _exchangeProvider.GetCandlesAsync(tradingPair, candlePeriod, startTime, endTime);
+            foreach (var pastCandle in pastCandles)
+            {
+                await _strategy.CheckTrendAsync(tradingPair, pastCandle);
+                await _candleRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(new List<CandleModel> { pastCandle }), lastScanId);
+            }
+        }
+
         private async Task CheckOrderInvoked(long orderNumber, TradeType tradeType)
         {
             await Task.Factory.StartNew(async () =>
@@ -240,7 +257,7 @@ namespace CryptoTrading.Logic.Services
         {
             var utcNow = DateTimeOffset.UtcNow;
             var candlePeridInMinutes = (int) candlePeriod;
-            var candleSizeInSeconds = candlePeridInMinutes * _strategy.CandleSize * 60;
+            var candleSizeInSeconds = candlePeridInMinutes * 60;
 
             return utcNow.AddSeconds(-1 * (candleSizeInSeconds + utcNow.Second)).ToUnixTimeSeconds();
         }

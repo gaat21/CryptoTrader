@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
@@ -19,8 +18,8 @@ namespace CryptoTrading.Logic.Strategies
             _mfiIndicator = indicatorFactory.GetMfiIndicator(options.Value.MfiWeight);
         }
 
-        public int CandleSize => 1;
-        public Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
+        public int DelayInCandlePeriod => 1;
+        public Task<TrendDirection> CheckTrendAsync(string tradingPair, CandleModel currentCandle)
         {
             var mfiValue = _mfiIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             Console.WriteLine($"Mfi indicator value: {mfiValue}");

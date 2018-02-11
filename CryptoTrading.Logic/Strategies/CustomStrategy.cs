@@ -24,9 +24,9 @@ namespace CryptoTrading.Logic.Strategies
             _longEmaIndicator = indicatorFactory.GetEmaIndicator(emaOptions.Value.LongWeight);
         }
 
-        public int CandleSize => 5;
+        public int DelayInCandlePeriod => 5;
 
-        public async Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
+        public async Task<TrendDirection> CheckTrendAsync(string tradingPair, CandleModel currentCandle)
         {
             var price = currentCandle.ClosePrice;
             var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;

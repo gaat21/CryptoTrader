@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
@@ -30,9 +29,9 @@ namespace CryptoTrading.Logic.Strategies
             _signalEmaIndicator = indicatorFactory.GetEmaIndicator(_options.Signal);
         }
 
-        public int CandleSize => 1;
+        public int DelayInCandlePeriod => 1;
 
-        public async Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
+        public async Task<TrendDirection> CheckTrendAsync(string tradingPair, CandleModel currentCandle)
         {
             var shortEmaValue = _shortEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             var longEmaValue = _longEmaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;

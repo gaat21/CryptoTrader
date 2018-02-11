@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using CryptoTrading.Logic.Indicators.Interfaces;
 using CryptoTrading.Logic.Models;
@@ -11,14 +10,14 @@ namespace CryptoTrading.Logic.Strategies
     {
         private TrendDirection _lastTrend = TrendDirection.Short;
         private readonly IIndicator _rsiIndicator;
-        public int CandleSize => 1;
+        public int DelayInCandlePeriod => 1;
 
         public RsiStrategy(IIndicatorFactory indicatorFactory)
         {
             _rsiIndicator = indicatorFactory.GetRsiIndicator(14);
         }
 
-        public Task<TrendDirection> CheckTrendAsync(string tradingPair, List<CandleModel> previousCandles, CandleModel currentCandle)
+        public Task<TrendDirection> CheckTrendAsync(string tradingPair, CandleModel currentCandle)
         {
             var rsiValue = _rsiIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
             Console.WriteLine($"Rsi value: {rsiValue}");
