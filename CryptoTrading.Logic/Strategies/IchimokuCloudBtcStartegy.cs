@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace CryptoTrading.Logic.Strategies
 {
-    public class IchimokuCloudStrategy : IStrategy
+    public class IchimokuCloudBtcStrategy : IStrategy
     {
         private readonly IIndicator _ichimokuCloudIndicator;
 
@@ -23,6 +23,7 @@ namespace CryptoTrading.Logic.Strategies
         private decimal _lastBuyPrice;
         private int _candleCount = 1;
         private decimal _lastMacd;
+        private decimal _lastClosePrice;
         private readonly FixedSizedQueue<decimal> _last5Macd;
         private int _delayCount = 1;
         private decimal _maxOrMinMacd;
@@ -30,7 +31,7 @@ namespace CryptoTrading.Logic.Strategies
 
         public int DelayInCandlePeriod => 180;
 
-        public IchimokuCloudStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
+        public IchimokuCloudBtcStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {
             _ichimokuCloudIndicator = indicatorFactory.GetIchimokuCloud();
             _emaIndicator = indicatorFactory.GetEmaIndicator(21);
@@ -51,7 +52,6 @@ namespace CryptoTrading.Logic.Strategies
             var rsiValue = _rsiIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
 
             var ichimokuCloudValue = _ichimokuCloudIndicator.GetIndicatorValue(currentCandle);
-            var emaValue = _emaIndicator.GetIndicatorValue(currentCandle).IndicatorValue;
 
             var ssa = ichimokuCloudValue.IchimokuCloud?.SenkouSpanAValue;
             var ssb = ichimokuCloudValue.IchimokuCloud?.SenkouSpanBValue;
@@ -63,8 +63,8 @@ namespace CryptoTrading.Logic.Strategies
                               $"SSB: {ssb}; " +
                               $"TS: {ts}; " +
                               $"KS: {ks}; " +
-                              $"LFSsa: {ichimokuCloudValue.IchimokuCloud?.SsaFuture.Last()}; " +
-                              $"LFSsb: {ichimokuCloudValue.IchimokuCloud?.SsbFuture.Last()}; " +
+                              //$"LFSsa: {ichimokuCloudValue.IchimokuCloud?.SsaFuture.Last()}; " +
+                              //$"LFSsb: {ichimokuCloudValue.IchimokuCloud?.SsbFuture.Last()}; " +
                               $"MACD: {macdValue}; " +
                               $"MinMaxMacd: {_maxOrMinMacd}; " +
                               $"RSI: {rsiValue}; " +
@@ -92,26 +92,28 @@ namespace CryptoTrading.Logic.Strategies
 
                 if (currentCandle.ClosePrice > ssa
                     && currentCandle.ClosePrice > ssb
-                    //&& currentCandle.CandleType == CandleType.Green
+                    && currentCandle.CandleType == CandleType.Green
                     //&& ts > ks
                     && currentCandle.ClosePrice > ts
                     && currentCandle.ClosePrice > ks
                     && macdValue > 0
-                    && macdValue < (decimal)2.0
                     && _stopTrading == false
-                    && rsiValue <= 40
+                    && rsiValue >= 70
                     && _lastMacd < macdValue
+                    && _last5Macd.GetItems().All(a => a < macdValue)
                     )
                 {
                     _lastMacd = macdValue;
                     _last5Macd.Enqueue(macdValue);
                     _lastTrend = TrendDirection.Long;
                     _lastBuyPrice = currentCandle.ClosePrice;
+                    _lastClosePrice = currentCandle.ClosePrice;
                 }
                 else
                 {
                     _last5Macd.Enqueue(macdValue);
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }
@@ -123,6 +125,7 @@ namespace CryptoTrading.Logic.Strategies
                     _delayCount++;
                     _last5Macd.Enqueue(macdValue);
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(TrendDirection.None);
                 }
 
@@ -137,7 +140,7 @@ namespace CryptoTrading.Logic.Strategies
                 }
 
                 var stopPercentage = (decimal)0.985;
-                var profitPercentage = (decimal) 1.02;
+                var profitPercentage = (decimal) 1.018;
                 var diffPreviousMacd = Math.Abs(_maxOrMinMacd - macdValue);
                 if (currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
                 {
@@ -146,18 +149,42 @@ namespace CryptoTrading.Logic.Strategies
                     _delayCount = 1;
                     _lastTrend = TrendDirection.Short;
                     _stopTrading = true;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(_lastTrend);
                 }
 
-                if (_lastMacd > macdValue
-                    && diffPreviousMacd > (decimal)0.2
-                    && currentCandle.ClosePrice > _lastBuyPrice * profitPercentage)
+                if (
+                    macdValue > 0 &&
+                    _lastMacd > 0 &&
+                    _lastMacd < macdValue &&
+                    diffPreviousMacd > (decimal)0.2 &&
+                    rsiValue > 80 &&
+                    currentCandle.ClosePrice > _lastBuyPrice * profitPercentage)
                 {
                     _last5Macd.Enqueue(macdValue);
                     _lastMacd = macdValue;
                     _delayCount = 1;
                     _lastTrend = TrendDirection.Short;
                     _stopTrading = true;
+                    _lastClosePrice = currentCandle.ClosePrice;
+                    return await Task.FromResult(_lastTrend);
+                }
+
+                if (
+                    macdValue > 0 &&
+                    _lastMacd > 0 &&
+                    _lastMacd < macdValue &&
+                    _lastClosePrice > currentCandle.ClosePrice &&
+                    //_lastClosePrice - currentCandle.ClosePrice > 2 &&
+                    rsiValue > 80 &&
+                    currentCandle.ClosePrice > _lastBuyPrice * profitPercentage)
+                {
+                    _last5Macd.Enqueue(macdValue);
+                    _lastMacd = macdValue;
+                    _delayCount = 1;
+                    _lastTrend = TrendDirection.Short;
+                    _stopTrading = true;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(_lastTrend);
                 }
 
@@ -168,6 +195,7 @@ namespace CryptoTrading.Logic.Strategies
                 {
                     _last5Macd.Enqueue(macdValue);
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     if (currentCandle.ClosePrice >= _lastBuyPrice * stopPercentage)
                     {
                         return await Task.FromResult(TrendDirection.None);
@@ -180,6 +208,7 @@ namespace CryptoTrading.Logic.Strategies
                 {
                     _last5Macd.Enqueue(macdValue);
                     _lastMacd = macdValue;
+                    _lastClosePrice = currentCandle.ClosePrice;
                     return await Task.FromResult(TrendDirection.None);
                 }
             }
