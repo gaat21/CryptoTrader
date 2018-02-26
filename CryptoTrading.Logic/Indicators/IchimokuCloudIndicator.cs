@@ -19,16 +19,17 @@ namespace CryptoTrading.Logic.Indicators
         private const int Short = 20;
         private const int Middle = 60;
         private const int Long = 120;
+        private const int Shift = 30;
 
         public IchimokuCloudIndicator()
         {
             _shortPeriodQueue = new FixedSizedQueue<CandleModel>(Short);
             _middlePeriodQueue = new FixedSizedQueue<CandleModel>(Middle);
             _longPeriodQueue = new FixedSizedQueue<CandleModel>(Long);
-            _tenkenSenQueue = new FixedSizedQueue<decimal>(Middle);
-            _kijunSenQueue = new FixedSizedQueue<decimal>(Middle);
-            _longPeriodHighestHighQueue = new FixedSizedQueue<decimal>(Middle);
-            _longPeriodLowestLowQueue = new FixedSizedQueue<decimal>(Middle);
+            _tenkenSenQueue = new FixedSizedQueue<decimal>(Shift);
+            _kijunSenQueue = new FixedSizedQueue<decimal>(Shift);
+            _longPeriodHighestHighQueue = new FixedSizedQueue<decimal>(Shift);
+            _longPeriodLowestLowQueue = new FixedSizedQueue<decimal>(Shift);
         }
 
         public IndicatorModel GetIndicatorValue(CandleModel currentCandle)
@@ -37,11 +38,15 @@ namespace CryptoTrading.Logic.Indicators
             _middlePeriodQueue.Enqueue(currentCandle);
             _longPeriodQueue.Enqueue(currentCandle);
 
-            if (_middlePeriodQueue.QueueSize == Middle)
+            if (_shortPeriodQueue.QueueSize == Short)
             {
                 var tenkanSenValue = Math.Round((_shortPeriodQueue.GetItems().Max(m => m.HighPrice) + _shortPeriodQueue.GetItems().Min(m => m.LowPrice)) / 2, 4);
-                var kijunSenValue = Math.Round((_middlePeriodQueue.GetItems().Max(m => m.HighPrice) + _middlePeriodQueue.GetItems().Min(m => m.LowPrice)) / 2, 4);
                 _tenkenSenQueue.Enqueue(tenkanSenValue);
+            }
+
+            if (_middlePeriodQueue.QueueSize == Middle)
+            {
+                var kijunSenValue = Math.Round((_middlePeriodQueue.GetItems().Max(m => m.HighPrice) + _middlePeriodQueue.GetItems().Min(m => m.LowPrice)) / 2, 4);
                 _kijunSenQueue.Enqueue(kijunSenValue);
             }
 
@@ -51,7 +56,7 @@ namespace CryptoTrading.Logic.Indicators
                 _longPeriodLowestLowQueue.Enqueue(_longPeriodQueue.GetItems().Min(h => h.LowPrice));
             }
 
-            if (_longPeriodQueue.QueueSize + _longPeriodHighestHighQueue.QueueSize < Middle + Long)
+            if (_longPeriodQueue.QueueSize + _longPeriodHighestHighQueue.QueueSize < Long + Shift)
             {
                 return new IndicatorModel
                 {
@@ -59,21 +64,21 @@ namespace CryptoTrading.Logic.Indicators
                 };
             }
 
-            var ssaFutureMiddleQueue = new FixedSizedQueue<decimal>(Middle);
-            var ssbFutureMiddleQueue = new FixedSizedQueue<decimal>(Middle);
+            var ssaFutureShiftQueue = new FixedSizedQueue<decimal>(Shift);
+            var ssbFutureShiftQueue = new FixedSizedQueue<decimal>(Shift);
             var crossOver = false;
-            for (int i = 0; i < Middle; i++)
+            for (int i = 0; i < Shift; i++)
             {
-                var ssaFutureMiddleValue = Math.Round((_tenkenSenQueue[i] + _kijunSenQueue[i]) / 2, 4);
-                var ssbFutureMiddleValue = Math.Round((_longPeriodHighestHighQueue[i] + _longPeriodLowestLowQueue[i]) / 2, 4);
+                var ssaFutureShiftValue = Math.Round((_tenkenSenQueue[i] + _kijunSenQueue[i]) / 2, 4);
+                var ssbFutureShiftValue = Math.Round((_longPeriodHighestHighQueue[i] + _longPeriodLowestLowQueue[i]) / 2, 4);
 
-                if (ssaFutureMiddleValue > ssbFutureMiddleValue)
+                if (ssaFutureShiftValue > ssbFutureShiftValue)
                 {
                     crossOver = true;
                 }
 
-                ssaFutureMiddleQueue.Enqueue(ssaFutureMiddleValue);
-                ssbFutureMiddleQueue.Enqueue(ssbFutureMiddleValue);
+                ssaFutureShiftQueue.Enqueue(ssaFutureShiftValue);
+                ssbFutureShiftQueue.Enqueue(ssbFutureShiftValue);
             }
 
             return new IndicatorModel
@@ -82,10 +87,10 @@ namespace CryptoTrading.Logic.Indicators
                 {
                     KijunSenValue = _kijunSenQueue.GetItems().Last(),
                     TenkanSenValue = _tenkenSenQueue.GetItems().Last(),
-                    SenkouSpanAValue = ssaFutureMiddleQueue.GetItems().First(),
-                    SenkouSpanBValue = ssbFutureMiddleQueue.GetItems().First(),
-                    SsaFuture = ssaFutureMiddleQueue.GetItems(),
-                    SsbFuture = ssbFutureMiddleQueue.GetItems(),
+                    SenkouSpanAValue = ssaFutureShiftQueue.GetItems().First(),
+                    SenkouSpanBValue = ssbFutureShiftQueue.GetItems().First(),
+                    SsaFuture = ssaFutureShiftQueue.GetItems(),
+                    SsbFuture = ssbFutureShiftQueue.GetItems(),
                     SsaCrossoverSsb = crossOver
                 }
             };

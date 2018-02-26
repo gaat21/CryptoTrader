@@ -29,7 +29,7 @@ namespace CryptoTrading.Logic.Strategies
         private decimal _maxOrMinMacd;
         private bool _stopTrading;
 
-        public int DelayInCandlePeriod => 180;
+        public int DelayInCandlePeriod => 150;
 
         public IchimokuCloudBtcStrategy(IOptions<MacdStrategyOptions> options, IIndicatorFactory indicatorFactory)
         {

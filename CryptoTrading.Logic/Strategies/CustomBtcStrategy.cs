@@ -53,7 +53,7 @@ namespace CryptoTrading.Logic.Strategies
             _volumenQueue = new FixedSizedQueue<decimal>(100);
         }
 
-        public int DelayInCandlePeriod => 180;
+        public int DelayInCandlePeriod => 150;
 
         public async Task<TrendDirection> CheckTrendAsync(string tradingPair, CandleModel currentCandle)
         {
