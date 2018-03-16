@@ -23,7 +23,21 @@ namespace CryptoTrading.Logic.Repositories
 
         public async Task<IEnumerable<CandleModel>> ImportCandlesAsync(string tradingPair, int intervalInHour, CandlePeriod candlePeriod)
         {
-            var candles = await _exchangeProvider.GetCandlesAsync(tradingPair, candlePeriod, DateTimeOffset.UtcNow.AddHours(-1 * intervalInHour).ToUnixTimeSeconds(), null);
+            var candles = new List<CandleModel>();
+            var remainedHours = intervalInHour % 24;
+            var initDateTime = DateTimeOffset.UtcNow.AddHours(-1 * intervalInHour);
+            for (int i = 0; i < intervalInHour / 24; i++)
+            {
+                var startDateTime = initDateTime.AddDays(i);
+                var endDateTime = initDateTime.AddDays(i + 1);
+                candles.AddRange(await _exchangeProvider.GetCandlesAsync(tradingPair, candlePeriod, startDateTime.ToUnixTimeSeconds(), endDateTime.ToUnixTimeSeconds()));
+                Console.WriteLine($"Iteration: {i}; StartDt: {startDateTime}; EndDt: {endDateTime};  Total count: {candles.Count}");
+            }
+
+            if (remainedHours > 0)
+            {
+                candles.AddRange(await _exchangeProvider.GetCandlesAsync(tradingPair, candlePeriod, DateTimeOffset.UtcNow.AddHours(-1 * remainedHours).ToUnixTimeSeconds(), null));
+            }
 
             await _candleDbRepository.SaveCandleAsync(tradingPair, Mapper.Map<List<CandleDto>>(candles));
             
