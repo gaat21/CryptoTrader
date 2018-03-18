@@ -4,6 +4,8 @@
     {
         OneMinute = 1,
         ThreeMinutes = 3,
-        FiveMinutes = 5
+        FiveMinutes = 5,
+        Minutes15 = 15,
+        Minutes30 = 30
     }
 }
