@@ -23,7 +23,7 @@ namespace CryptoTrading.Logic.Strategies
         private int _candleCount = 1;
         private decimal _lastMacd;
         private decimal _lastClosePrice;
-        private readonly FixedSizedQueue<decimal> _last5Macd;
+        private readonly FixedSizedQueue<decimal> _last10Macd;
         private int _delayCount = 1;
         private decimal _maxOrMinMacd;
         private bool _stopTrading;
@@ -39,7 +39,7 @@ namespace CryptoTrading.Logic.Strategies
             _shortEmaIndicator = indicatorFactory.GetEmaIndicator(options.Value.ShortWeight);
             _longEmaIndicator = indicatorFactory.GetEmaIndicator(options.Value.LongWeight);
 
-            _last5Macd = new FixedSizedQueue<decimal>(5);
+            _last10Macd = new FixedSizedQueue<decimal>(10);
             _prevClosePrices = new FixedSizedQueue<decimal>(25);
         }
 
@@ -72,7 +72,7 @@ namespace CryptoTrading.Logic.Strategies
             if (_candleCount <= 60)
             {
                 _candleCount++;
-                _last5Macd.Enqueue(macdValue);
+                _last10Macd.Enqueue(macdValue);
                 _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                 return await Task.FromResult(TrendDirection.None);
             }
@@ -95,11 +95,13 @@ namespace CryptoTrading.Logic.Strategies
                     && currentCandle.ClosePrice > ssb
                     && currentCandle.CandleType == CandleType.Green
                     && _stopTrading == false
-                    && macdValue < 15
+                    && macdValue < (decimal)20.0 
+                    && macdValue > (decimal)-20.0
+                    && _last10Macd.GetItems().All(a => a < macdValue)
                     )
                 {
                     _lastMacd = macdValue;
-                    _last5Macd.Enqueue(macdValue);
+                    _last10Macd.Enqueue(macdValue);
                     _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                     _lastTrend = TrendDirection.Long;
                     _lastBuyPrice = currentCandle.ClosePrice;
@@ -107,7 +109,7 @@ namespace CryptoTrading.Logic.Strategies
                 }
                 else
                 {
-                    _last5Macd.Enqueue(macdValue);
+                    _last10Macd.Enqueue(macdValue);
                     _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                     _lastMacd = macdValue;
                     _lastClosePrice = currentCandle.ClosePrice;
@@ -120,7 +122,7 @@ namespace CryptoTrading.Logic.Strategies
                 {
                     Console.WriteLine($"DelayCount: {_delayCount}");
                     _delayCount++;
-                    _last5Macd.Enqueue(macdValue);
+                    _last10Macd.Enqueue(macdValue);
                     _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                     _lastMacd = macdValue;
                     _lastClosePrice = currentCandle.ClosePrice;
@@ -143,7 +145,7 @@ namespace CryptoTrading.Logic.Strategies
                 var diffLastClosePricePercentage = (currentCandle.ClosePrice / _lastClosePrice) * (decimal)100.0 - 100;
                 if (diffLastClosePricePercentage <= (decimal)-0.75)
                 {
-                    _last5Macd.Enqueue(macdValue);
+                    _last10Macd.Enqueue(macdValue);
                     _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                     _lastMacd = macdValue;
                     _delayCount = 1;
@@ -155,7 +157,7 @@ namespace CryptoTrading.Logic.Strategies
 
                 if (currentCandle.ClosePrice < _lastBuyPrice * stopPercentage)
                 {
-                    _last5Macd.Enqueue(macdValue);
+                    _last10Macd.Enqueue(macdValue);
                     _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                     _lastMacd = macdValue;
                     _delayCount = 1;
@@ -172,7 +174,7 @@ namespace CryptoTrading.Logic.Strategies
                     diffPreviousMacd > (decimal)1.0 &&
                     currentCandle.ClosePrice > _lastBuyPrice * profitPercentage)
                 {
-                    _last5Macd.Enqueue(macdValue);
+                    _last10Macd.Enqueue(macdValue);
                     _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                     _lastMacd = macdValue;
                     _delayCount = 1;
@@ -182,7 +184,7 @@ namespace CryptoTrading.Logic.Strategies
                     return await Task.FromResult(_lastTrend);
                 }
                 
-                _last5Macd.Enqueue(macdValue);
+                _last10Macd.Enqueue(macdValue);
                 _prevClosePrices.Enqueue(currentCandle.ClosePrice);
                 _lastMacd = macdValue;
                 _lastClosePrice = currentCandle.ClosePrice;
